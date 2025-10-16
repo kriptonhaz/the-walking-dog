@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui";
+import { Button, DogPaws } from "@/components/ui";
 import { DesignSystemColors } from "@/constants/theme";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
@@ -68,22 +68,28 @@ export default function LandingScreen() {
               loop
               style={{ width: "100%", height: "100%" }}
             />
-            {/* Bottom Tagline */}
-            <View style={{ marginTop: -40, alignItems: "center" }}>
-              <Text
+            <View style={{ width: "100%", maxWidth: 280, marginTop: -50 }}>
+              <Button
+                title="Let's Go!"
+                onPress={() => router.push("/walk" as any)}
+                variant="primary"
+                size="lg"
+                rightIcon={<DogPaws size={18} color="#ffffff" />}
                 style={{
-                  fontSize: 12,
-                  color: DesignSystemColors.neutral[500],
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: 20,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 8,
+                  borderRadius: 12,
+                  paddingVertical: 16,
                 }}
-              >
-                "Every walk is a new adventure waiting to happen"
-              </Text>
+                textStyle={{
+                  fontSize: 18,
+                  fontWeight: "bold",
+                  paddingLeft: 8,
+                }}
+              />
             </View>
           </View>
 
@@ -98,9 +104,9 @@ export default function LandingScreen() {
             <Text
               style={{
                 fontSize: 28,
-                fontWeight: 'bold',
+                fontWeight: "bold",
                 color: DesignSystemColors.neutral[800],
-                textAlign: 'center',
+                textAlign: "center",
                 marginBottom: 8,
                 textShadowColor: "rgba(255, 255, 255, 0.8)",
                 textShadowOffset: { width: 0, height: 1 },
@@ -111,42 +117,18 @@ export default function LandingScreen() {
             </Text>
             <Text
               style={{
-                fontSize: 16,
+                fontSize: 12,
                 color: DesignSystemColors.neutral[500],
-                textAlign: 'center',
-                marginBottom: 16,
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-                borderRadius: 8,
+                textAlign: "center",
+                fontStyle: "italic",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
               }}
             >
-              Your companion for healthy adventures
+              "Every walk is a new adventure waiting to happen"
             </Text>
-          </View>
-
-          {/* Action Buttons - More Visible */}
-          <View style={{ width: "100%", maxWidth: 280, marginBottom: 24 }}>
-            <Button
-              title="Let's Go! 🐾"
-              onPress={() => router.push("/walk" as any)}
-              variant="primary"
-              size="lg"
-              style={{
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 8,
-                borderRadius: 12,
-                paddingVertical: 16,
-              }}
-              textStyle={{
-                fontSize: 18,
-                fontWeight: "bold",
-                paddingLeft: 8,
-              }}
-            />
           </View>
         </View>
       </View>
