@@ -1,10 +1,10 @@
-import { weatherApi } from './api';
-
 export interface WeatherInfo {
   temperature: number;
   condition: string;
-  humidity: number;
+  humidity?: number;
   windSpeed: number;
+  windDirection?: number;
+  isDay: boolean;
   location?: string;
 }
 
@@ -15,46 +15,92 @@ export interface LocationData {
   country?: string;
 }
 
-interface OpenWeatherResponse {
-  main: {
-    temp: number;
-    humidity: number;
-  };
-  weather: Array<{
-    main: string;
-    description: string;
-  }>;
-  wind: {
-    speed: number;
-  };
-  name: string;
-  sys: {
-    country: string;
-  };
+interface OpenMeteoCurrentWeather {
+  time: string;
+  interval: number;
+  temperature: number;
+  windspeed: number;
+  winddirection: number;
+  is_day: number;
+  weathercode: number;
+}
+
+interface OpenMeteoCurrentWeatherUnits {
+  time: string;
+  interval: string;
+  temperature: string;
+  windspeed: string;
+  winddirection: string;
+  is_day: string;
+  weathercode: string;
+}
+
+interface OpenMeteoResponse {
+  latitude: number;
+  longitude: number;
+  generationtime_ms: number;
+  utc_offset_seconds: number;
+  timezone: string;
+  timezone_abbreviation: string;
+  elevation: number;
+  current_weather_units: OpenMeteoCurrentWeatherUnits;
+  current_weather: OpenMeteoCurrentWeather;
 }
 
 export class WeatherService {
-  private static readonly API_KEY = 'demo'; // Replace with actual API key in production
+  private static readonly OPEN_METEO_BASE_URL = 'https://api.open-meteo.com/v1';
+
+  // Weather code descriptions based on WMO codes
+  private static readonly weatherDescriptions = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
+    71: "Slight snowfall",
+    73: "Moderate snowfall",
+    75: "Heavy snowfall",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail"
+  } as const;
 
   static async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherInfo> {
     try {
-      const response = await weatherApi.get('weather', {
-        searchParams: {
-          lat: latitude.toString(),
-          lon: longitude.toString(),
-          appid: this.API_KEY,
-          units: 'metric',
-        },
-      });
+      const url = `${this.OPEN_METEO_BASE_URL}/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      const data: OpenWeatherResponse = await response.json();
+      const data: OpenMeteoResponse = await response.json();
+      const currentWeather = data.current_weather;
 
       return {
-        temperature: Math.round(data.main.temp),
-        condition: data.weather[0].main,
-        humidity: data.main.humidity,
-        windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
-        location: `${data.name}, ${data.sys.country}`,
+        temperature: Math.round(currentWeather.temperature),
+        condition: this.weatherDescriptions[currentWeather.weathercode as keyof typeof this.weatherDescriptions] || 'Unknown',
+        windSpeed: Math.round(currentWeather.windspeed),
+        windDirection: currentWeather.winddirection,
+        isDay: currentWeather.is_day === 1,
       };
     } catch (error) {
       console.error('Weather API error:', error);
@@ -68,6 +114,7 @@ export class WeatherService {
       condition: 'Sunny',
       humidity: 65,
       windSpeed: 8,
+      isDay: true,
       location: 'Current Location',
     };
   }

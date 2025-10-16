@@ -1,66 +1,171 @@
-import React from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
-import { router } from 'expo-router';
-import LottieView from 'lottie-react-native';
-import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
-import { useDogStore } from '@/store/dogStore';
-import { useWeather } from '@/hooks/use-weather';
-import { WeatherService } from '@/services/weather-api';
+import { useWeather } from "@/hooks/use-weather";
+import { WeatherService } from "@/services/weather-api";
+import { useDogStore } from "@/store/dogStore";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import LottieView from "lottie-react-native";
+import React, { useEffect, useState } from "react";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 
 const { width, height } = Dimensions.get("window");
+
+// Weather icon mapping function
+const getWeatherAnimation = (condition: string, isDay: boolean) => {
+  const conditionLower = condition.toLowerCase();
+
+  // Clear sky conditions
+  if (conditionLower.includes("clear")) {
+    return isDay
+      ? require("@/assets/animations/Weather-sunny.json")
+      : require("@/assets/animations/Weather-night.json");
+  }
+
+  // Mainly clear conditions
+  if (conditionLower.includes("mainly clear")) {
+    return isDay
+      ? require("@/assets/animations/Weather-sunny.json")
+      : require("@/assets/animations/Weather-night.json");
+  }
+
+  // Partly cloudy conditions
+  if (conditionLower.includes("partly cloudy")) {
+    return require("@/assets/animations/Weather-partly cloudy.json");
+  }
+
+  // Overcast conditions
+  if (conditionLower.includes("overcast")) {
+    return isDay
+      ? require("@/assets/animations/Weather-partly cloudy.json")
+      : require("@/assets/animations/Weather-cloudy(night).json");
+  }
+
+  // Fog conditions
+  if (conditionLower.includes("fog")) {
+    return require("@/assets/animations/Weather-foggy.json");
+  }
+
+  // Mist conditions
+  if (conditionLower.includes("mist")) {
+    return require("@/assets/animations/Weather-mist.json");
+  }
+
+  // Rain conditions
+  if (conditionLower.includes("rain") || conditionLower.includes("drizzle")) {
+    if (conditionLower.includes("shower")) {
+      return require("@/assets/animations/Weather-partly shower.json");
+    }
+    return isDay
+      ? require("@/assets/animations/Weather-partly shower.json")
+      : require("@/assets/animations/Weather-rainy(night).json");
+  }
+
+  // Snow conditions
+  if (conditionLower.includes("snow")) {
+    if (conditionLower.includes("sunny") || isDay) {
+      return require("@/assets/animations/Weather-snow sunny.json");
+    }
+    return require("@/assets/animations/Weather-snow(night).json");
+  }
+
+  // Thunderstorm conditions
+  if (conditionLower.includes("thunderstorm")) {
+    return conditionLower.includes("hail")
+      ? require("@/assets/animations/Weather-storm.json")
+      : require("@/assets/animations/Weather-thunder.json");
+  }
+
+  // Windy conditions
+  if (conditionLower.includes("wind")) {
+    return require("@/assets/animations/Weather-windy.json");
+  }
+
+  // Default fallback
+  return isDay
+    ? require("@/assets/animations/Weather-sunny.json")
+    : require("@/assets/animations/Weather-night.json");
+};
 
 interface DogInfo {
   name: string;
   breed: string;
   age: number;
   lastWalk?: string;
+  photo?: string;
 }
+
+// Welcome messages that rotate every 5 seconds
+const welcomeMessages = [
+  "Ready for an adventure? 🌟",
+  "Time to explore together! 🚶‍♂️",
+  "Your furry friend awaits! 🐕",
+  "Let's make today pawsome! 🐾",
+  "Adventure is calling! 🌈",
+  "Perfect day for a walk! ☀️",
+  "Your dog's tail is wagging! 🎾",
+  "Nature is waiting for you! 🌳",
+];
 
 // Mock data
 const mockDog: DogInfo = {
-  name: 'Buddy',
-  breed: 'Golden Retriever',
+  name: "Buddy",
+  breed: "Golden Retriever",
   age: 3,
-  lastWalk: '2 hours ago',
+  lastWalk: "2 hours ago",
 };
-
-const walkSuggestions = [
-  {
-    id: '1',
-    title: 'Morning Park Walk',
-    duration: '30 min',
-    distance: '2.1 km',
-    difficulty: 'Easy',
-    description: 'Perfect weather for a relaxing walk in the park',
-  },
-  {
-    id: '2',
-    title: 'Beach Trail',
-    duration: '45 min',
-    distance: '3.2 km',
-    difficulty: 'Moderate',
-    description: 'Great for active dogs who love water',
-  },
-  {
-    id: '3',
-    title: 'Neighborhood Loop',
-    duration: '20 min',
-    distance: '1.5 km',
-    difficulty: 'Easy',
-    description: 'Quick walk around familiar streets',
-  },
-];
 
 export default function HomeScreen() {
   const { dogs } = useDogStore();
   const { weather, isLoading: isLoadingWeather, refetch } = useWeather();
+  const [currentWelcomeIndex, setCurrentWelcomeIndex] = useState(0);
+
+  // Rotate welcome message every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWelcomeIndex(
+        (prevIndex) => (prevIndex + 1) % welcomeMessages.length
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStartWalk = () => {
-    router.push('/(tabs)/../walk' as any);
+    router.push("/(tabs)/../walk" as any);
   };
 
+  useEffect(() => {
+    console.log(weather);
+  }, [weather]);
+
   const currentWeather = weather || WeatherService.getMockWeather();
-  const recommendation = WeatherService.getWalkingRecommendation(currentWeather);
+  const currentDog = dogs.length > 0 ? dogs[0] : mockDog;
+
+  // Get current date
+  const getCurrentDate = () => {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    };
+    return now.toLocaleDateString("en-US", options);
+  };
+
+  // Calculate daily walk distance needed (based on dog breed and age)
+  const getDailyWalkDistance = (breed: string, age: number) => {
+    const baseDistance =
+      breed.toLowerCase().includes("retriever") ||
+      breed.toLowerCase().includes("shepherd")
+        ? 5
+        : 3;
+    const ageMultiplier = age > 7 ? 0.7 : age < 2 ? 0.8 : 1;
+    return Math.round(baseDistance * ageMultiplier * 10) / 10;
+  };
+
+  const dailyWalkNeeded = getDailyWalkDistance(
+    currentDog.breed,
+    currentDog.age
+  );
 
   return (
     <View className="flex-1 bg-background">
@@ -82,279 +187,203 @@ export default function HomeScreen() {
           style={{
             width: width,
             height: height,
-            opacity: 0.6,
+            // opacity: 0.3,
           }}
           resizeMode="cover"
         />
       </View>
 
-      <SafeAreaView className="flex-1" style={{ zIndex: 1 }}>
-        <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
+      {/* Weather Card */}
+      <View style={styles.container}>
+        <LinearGradient
+          colors={["#1e3a8a", "#3b82f6", "#60a5fa"]}
+          style={styles.weatherCard}
+        >
           {/* Header */}
-          <View className="mb-8 mt-4">
-            <Text className="text-3xl font-bold text-text-primary mb-2">
-              Good morning! 🌅
-            </Text>
-            <Text className="text-lg text-text-secondary">
-              Ready for an adventure with your furry friend?
-            </Text>
-          </View>
-
-          {/* Weather Card - Redesigned */}
-          <Card variant="elevated" padding="lg" style={{ marginBottom: 24 }}>
-            <View className="flex-row items-center justify-between mb-4">
-              <View>
-                <Text className="text-lg font-semibold text-text-primary mb-1">
-                  Today's Weather
-                </Text>
-                {currentWeather.location && (
-                  <Text className="text-sm text-text-secondary">
-                    📍 {currentWeather.location}
-                  </Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                onPress={refetch}
-                className="bg-primary/10 p-3 rounded-full"
-                disabled={isLoadingWeather}
-              >
-                <Text className={`text-lg ${isLoadingWeather ? 'opacity-50' : ''}`}>
-                  🔄
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {isLoadingWeather ? (
-              <View className="items-center py-8">
-                <Text className="text-4xl mb-3">🌤️</Text>
-                <Text className="text-text-secondary">Getting weather data...</Text>
-              </View>
-            ) : (
-              <>
-                <View className="flex-row items-center mb-6">
-                  <View className="bg-primary/10 p-4 rounded-2xl mr-4">
-                    <Text className="text-5xl">
-                      {WeatherService.getWeatherIcon(currentWeather.condition)}
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-4xl font-bold text-text-primary mb-1">
-                      {currentWeather.temperature}°C
-                    </Text>
-                    <Text className="text-lg text-text-secondary mb-2">
-                      {currentWeather.condition}
-                    </Text>
-                    <View className="bg-green-100 px-3 py-1 rounded-full self-start">
-                      <Text className={`text-sm font-medium ${recommendation.color}`}>
-                        {recommendation.text}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View className="flex-row justify-around bg-background/50 rounded-xl p-4">
-                  <View className="items-center">
-                    <Text className="text-2xl mb-1">💧</Text>
-                    <Text className="text-text-secondary text-sm">Humidity</Text>
-                    <Text className="text-text-primary font-semibold">{currentWeather.humidity}%</Text>
-                  </View>
-                  <View className="items-center">
-                    <Text className="text-2xl mb-1">💨</Text>
-                    <Text className="text-text-secondary text-sm">Wind</Text>
-                    <Text className="text-text-primary font-semibold">{currentWeather.windSpeed} km/h</Text>
-                  </View>
-                  <View className="items-center">
-                    <Text className="text-2xl mb-1">🌡️</Text>
-                    <Text className="text-text-secondary text-sm">Feels like</Text>
-                    <Text className="text-text-primary font-semibold">{currentWeather.temperature + 2}°C</Text>
-                  </View>
-                </View>
-              </>
-            )}
-          </Card>
-
-          {/* Dogs Section - Redesigned */}
-          {dogs.length > 0 ? (
-            <View className="mb-6">
-              <Text className="text-xl font-bold text-text-primary mb-4">
-                Your Dogs 🐕
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.location}>
+                {currentWeather.location || "Current Location"}
               </Text>
-              {dogs.map((dog) => (
-                <Card key={dog.id} variant="elevated" padding="lg" style={{ marginBottom: 16 }}>
-                  <View className="flex-row items-center">
-                    <View className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl items-center justify-center mr-4 overflow-hidden">
-                      {dog.photo ? (
-                        <Image 
-                          source={{ uri: dog.photo }} 
-                          style={{ width: 80, height: 80, borderRadius: 16 }}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <Text className="text-3xl">🐕</Text>
-                      )}
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-xl font-bold text-text-primary mb-1">
-                        {dog.name}
-                      </Text>
-                      <Text className="text-text-secondary mb-2">
-                        {dog.breed} • {dog.age} years old
-                      </Text>
-                      <View className="flex-row items-center">
-                        <View className="bg-accent/20 px-2 py-1 rounded-full mr-2">
-                          <Text className="text-accent text-xs font-medium">
-                            {dog.weight} kg
-                          </Text>
-                        </View>
-                        <Text className="text-sm text-green-600">
-                          Ready for walk! 🚶‍♂️
-                        </Text>
-                      </View>
-                    </View>
-                    <Button
-                      title="Edit"
-                      variant="outline"
-                      size="sm"
-                      onPress={() => router.push('/(tabs)/../dog' as any)}
-                    />
-                  </View>
-                </Card>
-              ))}
-            </View>
-          ) : (
-            <Card variant="elevated" padding="lg" style={{ marginBottom: 24 }}>
-              <View className="items-center py-6">
-                <View className="bg-primary/10 p-6 rounded-full mb-4">
-                  <Text className="text-6xl">🐕</Text>
-                </View>
-                <Text className="text-xl font-bold text-text-primary mb-2">
-                  No Dogs Registered
-                </Text>
-                <Text className="text-text-secondary text-center mb-6 leading-6">
-                  Add your first furry friend to get started with tracking walks and personalized recommendations!
-                </Text>
-                <Button
-                  title="Add Your First Dog"
-                  variant="primary"
-                  onPress={() => router.push('/(tabs)/../dog' as any)}
-                />
-              </View>
-            </Card>
-          )}
-
-          {/* Quick Start Walk Button - Redesigned */}
-          <TouchableOpacity
-            onPress={handleStartWalk}
-            className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 mb-6 shadow-lg"
-            style={{ 
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 8,
-            }}
-          >
-            <View className="flex-row items-center justify-center">
-              <Text className="text-2xl mr-3">🚶‍♂️</Text>
-              <Text className="text-white text-xl font-bold">Start Walking Now</Text>
-            </View>
-            <Text className="text-white/80 text-center mt-2">
-              Perfect conditions for a great walk!
-            </Text>
-          </TouchableOpacity>
-
-          {/* Walk Suggestions - Redesigned */}
-          <View className="mb-6">
-            <Text className="text-xl font-bold text-text-primary mb-4">
-              Suggested Walks ✨
-            </Text>
-            
-            {walkSuggestions.map((suggestion, index) => (
-              <TouchableOpacity
-                key={suggestion.id}
-                onPress={handleStartWalk}
-                className="mb-4"
-              >
-                <Card variant="default" padding="lg">
-                  <View className="flex-row justify-between items-start mb-3">
-                    <View className="flex-1">
-                      <Text className="text-lg font-bold text-text-primary mb-1">
-                        {suggestion.title}
-                      </Text>
-                      <Text className="text-text-secondary text-sm mb-3 leading-5">
-                        {suggestion.description}
-                      </Text>
-                    </View>
-                    <View className={`px-3 py-1 rounded-full ml-3 ${
-                      suggestion.difficulty === 'Easy' ? 'bg-green-100' :
-                      suggestion.difficulty === 'Moderate' ? 'bg-yellow-100' : 'bg-red-100'
-                    }`}>
-                      <Text className={`text-xs font-semibold ${
-                        suggestion.difficulty === 'Easy' ? 'text-green-700' :
-                        suggestion.difficulty === 'Moderate' ? 'text-yellow-700' : 'text-red-700'
-                      }`}>
-                        {suggestion.difficulty}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View className="flex-row justify-between items-center">
-                    <View className="flex-row space-x-4">
-                      <View className="flex-row items-center">
-                        <Text className="text-lg mr-1">⏱️</Text>
-                        <Text className="text-text-secondary text-sm font-medium">
-                          {suggestion.duration}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <Text className="text-lg mr-1">📍</Text>
-                        <Text className="text-text-secondary text-sm font-medium">
-                          {suggestion.distance}
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="bg-primary/10 px-4 py-2 rounded-full">
-                      <Text className="text-primary font-semibold text-sm">Start →</Text>
-                    </View>
-                  </View>
-                </Card>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Quick Stats - Redesigned */}
-          <View className="mb-8">
-            <Text className="text-xl font-bold text-text-primary mb-4">
-              This Week's Progress 📊
-            </Text>
-            <View className="flex-row space-x-3">
-              <Card variant="elevated" padding="lg" style={{ flex: 1 }}>
-                <View className="items-center">
-                  <Text className="text-3xl mb-2">🚶‍♂️</Text>
-                  <Text className="text-2xl font-bold text-primary mb-1">7</Text>
-                  <Text className="text-text-secondary text-sm text-center">walks</Text>
-                </View>
-              </Card>
-              
-              <Card variant="elevated" padding="lg" style={{ flex: 1 }}>
-                <View className="items-center">
-                  <Text className="text-3xl mb-2">📍</Text>
-                  <Text className="text-2xl font-bold text-secondary mb-1">12.3</Text>
-                  <Text className="text-text-secondary text-sm text-center">km</Text>
-                </View>
-              </Card>
-              
-              <Card variant="elevated" padding="lg" style={{ flex: 1 }}>
-                <View className="items-center">
-                  <Text className="text-3xl mb-2">⏰</Text>
-                  <Text className="text-2xl font-bold text-accent mb-1">4h 20m</Text>
-                  <Text className="text-text-secondary text-sm text-center">time</Text>
-                </View>
-              </Card>
+              <Text style={styles.date}>{getCurrentDate()}</Text>
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+
+          {/* Main Weather Info */}
+          <View style={styles.mainWeatherInfo}>
+            <View style={styles.weatherIconContainer}>
+              <LottieView
+                source={getWeatherAnimation(
+                  currentWeather.condition,
+                  currentWeather.isDay ?? true
+                )}
+                autoPlay
+                loop
+                style={styles.weatherIcon}
+              />
+            </View>
+            <View style={styles.temperatureContainer}>
+              <Text style={styles.temperature}>
+                {currentWeather.temperature}°
+              </Text>
+              <Text style={styles.condition}>{currentWeather.condition}</Text>
+            </View>
+          </View>
+
+          {/* High/Low Temperature */}
+          <View style={styles.highLowContainer}>
+            <View style={styles.tempItem}>
+              <Text style={styles.tempLabel}>
+                High : {currentWeather.temperature + 6}°C
+              </Text>
+              <Text style={styles.tempArrow}>↗</Text>
+            </View>
+            <View style={styles.tempItem}>
+              <Text style={styles.tempLabel}>
+                Low : {currentWeather.temperature - 8}°C
+              </Text>
+              <Text style={styles.tempArrow}>↘</Text>
+            </View>
+          </View>
+
+          {/* Weather Details */}
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Humidity</Text>
+              <Text style={styles.detailValue}>
+                {currentWeather.humidity || 65}%
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Wind</Text>
+              <Text style={styles.detailValue}>
+                {currentWeather.windSpeed} km/h
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>Rain</Text>
+              <Text style={styles.detailValue}>24%</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignSelf: "center",
+    marginTop: 70,
+  },
+  weatherCard: {
+    width: width * 0.9,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 24,
+  },
+  location: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "white",
+    marginBottom: 4,
+  },
+  date: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  notificationIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bellIcon: {
+    fontSize: 16,
+  },
+  mainWeatherInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  weatherIconContainer: {
+    width: 120,
+    height: 120,
+    marginRight: 20,
+  },
+  weatherIcon: {
+    width: "100%",
+    height: "100%",
+  },
+  temperatureContainer: {
+    flex: 1,
+  },
+  temperature: {
+    fontSize: 72,
+    fontWeight: "300",
+    color: "white",
+    lineHeight: 72,
+  },
+  condition: {
+    fontSize: 18,
+    color: "rgba(255, 255, 255, 0.9)",
+    marginTop: 4,
+  },
+  highLowContainer: {
+    flexDirection: "row",
+    marginBottom: 24,
+    gap: 16,
+  },
+  tempItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    flex: 1,
+  },
+  tempLabel: {
+    fontSize: 14,
+    color: "white",
+    flex: 1,
+  },
+  tempArrow: {
+    fontSize: 16,
+    color: "white",
+  },
+  detailsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detailItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 4,
+  },
+  detailValue: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "white",
+  },
+});
