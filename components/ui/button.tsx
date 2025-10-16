@@ -1,56 +1,76 @@
-import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { DesignSystemColors } from "@/constants/theme";
+import React from "react";
+import {
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+  TouchableOpacityProps,
+  ViewStyle,
+  TextStyle,
+} from "react-native";
 
-const buttonVariants = cva(
-  'flex-row items-center justify-center rounded-button px-4 py-3 active:opacity-80',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-primary',
-        secondary: 'bg-secondary',
-        outline: 'border border-primary bg-transparent',
-        ghost: 'bg-transparent',
-        destructive: 'bg-red-500',
-      },
-      size: {
-        sm: 'px-3 py-2',
-        md: 'px-4 py-3',
-        lg: 'px-6 py-4',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
-    },
-  }
-);
+// Define button styles using actual color values from design system
+const getButtonStyle = (variant: string, size: string) => {
+  const baseStyle = {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderRadius: 8,
+  };
 
-const textVariants = cva(
-  'font-medium text-center',
-  {
-    variants: {
-      variant: {
-        primary: 'text-white',
-        secondary: 'text-white',
-        outline: 'text-primary',
-        ghost: 'text-primary',
-        destructive: 'text-white',
-      },
-      size: {
-        sm: 'text-sm',
-        md: 'text-base',
-        lg: 'text-lg',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
-    },
-  }
-);
+  const sizeStyles = {
+    sm: { paddingHorizontal: 12, paddingVertical: 8 },
+    md: { paddingHorizontal: 16, paddingVertical: 12 },
+    lg: { paddingHorizontal: 24, paddingVertical: 16 },
+  };
 
-export interface ButtonProps extends VariantProps<typeof buttonVariants> {
+  const variantStyles = {
+    primary: { backgroundColor: DesignSystemColors.primary[500] },
+    secondary: { backgroundColor: DesignSystemColors.secondary[500] },
+    outline: { 
+      backgroundColor: 'transparent', 
+      borderWidth: 1, 
+      borderColor: DesignSystemColors.primary[500] 
+    },
+    ghost: { backgroundColor: 'transparent' },
+    destructive: { backgroundColor: DesignSystemColors.semantic.error },
+  };
+
+  return {
+    ...baseStyle,
+    ...sizeStyles[size as keyof typeof sizeStyles],
+    ...variantStyles[variant as keyof typeof variantStyles],
+  };
+};
+
+const getTextStyle = (variant: string, size: string) => {
+  const baseStyle = {
+    fontWeight: '500' as const,
+    textAlign: 'center' as const,
+  };
+
+  const sizeStyles = {
+    sm: { fontSize: 14 },
+    md: { fontSize: 16 },
+    lg: { fontSize: 18 },
+  };
+
+  const variantStyles = {
+    primary: { color: DesignSystemColors.text.inverse },
+    secondary: { color: DesignSystemColors.text.inverse },
+    outline: { color: DesignSystemColors.primary[500] },
+    ghost: { color: DesignSystemColors.primary[500] },
+    destructive: { color: DesignSystemColors.text.inverse },
+  };
+
+  return {
+    ...baseStyle,
+    ...sizeStyles[size as keyof typeof sizeStyles],
+    ...variantStyles[variant as keyof typeof variantStyles],
+  };
+};
+
+export interface ButtonProps {
   title: string;
   onPress?: () => void;
   disabled?: boolean;
@@ -68,35 +88,38 @@ export const Button: React.FC<ButtonProps> = ({
   onPress,
   disabled = false,
   loading = false,
-  variant,
-  size,
+  variant = 'primary',
+  size = 'md',
   style,
   textStyle,
   leftIcon,
   rightIcon,
   ...props
 }) => {
-  const buttonClass = buttonVariants({ variant, size });
-  const textClass = textVariants({ variant, size });
+  const buttonStyle = getButtonStyle(variant, size);
+  const textStyleComputed = getTextStyle(variant, size);
 
   return (
     <TouchableOpacity
-      className={`${buttonClass} ${disabled || loading ? 'opacity-50' : ''}`}
+      style={[
+        buttonStyle,
+        disabled || loading ? { opacity: 0.5 } : {},
+        style
+      ]}
       onPress={onPress}
       disabled={disabled || loading}
-      style={style}
       activeOpacity={0.8}
       {...props}
     >
       {loading ? (
         <ActivityIndicator 
           size="small" 
-          color={variant === 'outline' || variant === 'ghost' ? '#22c55e' : 'white'} 
+          color={variant === 'outline' || variant === 'ghost' ? '#c97c41' : 'white'} 
         />
       ) : (
         <>
           {leftIcon}
-          <Text className={textClass} style={textStyle}>
+          <Text style={[textStyleComputed, textStyle]}>
             {title}
           </Text>
           {rightIcon}
