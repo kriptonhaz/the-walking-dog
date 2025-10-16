@@ -1,5 +1,6 @@
 import { Button, DogPaws } from "@/components/ui";
 import { DesignSystemColors } from "@/constants/theme";
+import { useDogStore } from "@/store/dogStore";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
 import React from "react";
@@ -8,6 +9,18 @@ import { Dimensions, StatusBar, Text, View } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 export default function LandingScreen() {
+  const { dogs } = useDogStore();
+
+  const handleGetStarted = () => {
+    if (dogs.length > 0) {
+      // If there are dogs in the store, go to home screen
+      router.push("/(tabs)");
+    } else {
+      // If no dogs, go to walk screen to register first dog
+      router.push("/walk" as any);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
       <StatusBar
@@ -71,7 +84,7 @@ export default function LandingScreen() {
             <View style={{ width: "100%", maxWidth: 280, marginTop: -50 }}>
               <Button
                 title="Let's Go!"
-                onPress={() => router.push("/walk" as any)}
+                onPress={handleGetStarted}
                 variant="primary"
                 size="lg"
                 rightIcon={<DogPaws size={18} color="#ffffff" />}
