@@ -3,6 +3,8 @@ export { Alert } from './alert';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './card';
 export { Input } from './input';
 export { Dropdown } from './dropdown';
+export { Collapsible } from './collapsible';
+export { DogPaws } from './dog-paws';
 
 export type { ButtonProps } from './button';
 export type { AlertProps } from './alert';
