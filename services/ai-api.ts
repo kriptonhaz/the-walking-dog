@@ -204,7 +204,7 @@ ${request.location ? `- Location: ${request.location}` : ""}`;
               },
             },
           },
-          max_tokens: 500,
+          max_tokens: 1000,
           temperature: 0.3,
         },
       });
