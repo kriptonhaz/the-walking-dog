@@ -370,7 +370,7 @@ export default function HomeScreen() {
               <View key={dog.id} style={styles.dogCard}>
                 {/* Colored stripe on the left */}
                 <View style={styles.colorStripe} />
-                
+
                 <View style={styles.dogCardContent}>
                   {/* Left Section - Dog Info */}
                   <View style={styles.dogInfoSection}>
@@ -425,18 +425,31 @@ export default function HomeScreen() {
                         </Text>
                       ) : aiRecommendation ? (
                         <View style={styles.aiRecommendationContainer}>
-                          <Text style={styles.aiRecommendationText}>
-                            {aiRecommendation.recommendation.distance_km} km
-                            walk
-                          </Text>
-                          <Text style={styles.aiRecommendationText}>
-                            {aiRecommendation.recommendation.duration_min}{" "}
-                            minutes
-                          </Text>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              width: "80%",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Text style={styles.aiRecommendationText}>
+                              {aiRecommendation.recommendation.distance_km} km
+                              walk
+                            </Text>
+                            <Text style={styles.aiRecommendationText}>
+                              {aiRecommendation.recommendation.duration_min}{" "}
+                              minutes
+                            </Text>
+                          </View>
                           <Text style={styles.aiIntensityText}>
                             {aiRecommendation.recommendation.intensity.toUpperCase()}{" "}
                             intensity
                           </Text>
+                          {aiRecommendation.message && (
+                            <Text style={styles.aiMessageText}>
+                              {aiRecommendation.message}
+                            </Text>
+                          )}
                         </View>
                       ) : (
                         <>
@@ -563,14 +576,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   dogName: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: "#374151",
     marginBottom: 4,
     textAlign: "center" as const,
   },
   dogBreed: {
-    fontSize: 16,
+    fontSize: 12,
     color: "#6B7280",
     textAlign: "center" as const,
   },
@@ -675,25 +688,25 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   dogInfoSection: {
-    flex: 1,
+    flex: 0.6,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     paddingRight: 12,
   },
   dogAge: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6B7280",
     textAlign: "center" as const,
     marginTop: 2,
   },
   dogWeight: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#6B7280",
     textAlign: "center" as const,
     marginTop: 2,
   },
   aiSuggestionsSection: {
-    flex: 1,
+    flex: 1.4,
     paddingLeft: 12,
     justifyContent: "center" as const,
     alignItems: "center" as const,
@@ -706,9 +719,9 @@ const styles = StyleSheet.create({
     textAlign: "center" as const,
   },
   aiContentContainer: {
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    flex: 1,
+    // alignItems: "center" as const,
+    // justifyContent: "center" as const,
+    // flex: 1,
   },
   walkingAnimation: {
     width: 80,
@@ -744,5 +757,13 @@ const styles = StyleSheet.create({
     textAlign: "center" as const,
     fontWeight: "600",
     marginTop: 4,
+  },
+  aiMessageText: {
+    fontSize: 10,
+    color: "#4B5563",
+    textAlign: "center" as const,
+    lineHeight: 14,
+    marginTop: 8,
+    paddingHorizontal: 4,
   },
 });
