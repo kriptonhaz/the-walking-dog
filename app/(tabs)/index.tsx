@@ -186,7 +186,7 @@ export default function HomeScreen() {
     const currentMessage = welcomeMessages[currentMessageIndex];
     setDisplayedText("");
     setIsTyping(true);
-    
+
     let charIndex = 0;
     const typingInterval = setInterval(() => {
       if (charIndex < currentMessage.length) {
@@ -204,18 +204,20 @@ export default function HomeScreen() {
   const handleStartWalk = () => {
     // Pass AI recommendation data and dog ID to walk-map screen
     const params = {
-      dogId: dogs.length > 0 ? dogs[0].id : 'default-dog-id',
-      ...(aiRecommendation ? {
-        suggestedDistance: aiRecommendation.recommendation.distance_km,
-        suggestedDuration: aiRecommendation.recommendation.duration_min,
-        intensity: aiRecommendation.recommendation.intensity,
-        message: aiRecommendation.message
-      } : {})
+      dogId: dogs.length > 0 ? dogs[0].id : "default-dog-id",
+      ...(aiRecommendation
+        ? {
+            suggestedDistance: aiRecommendation.recommendation.distance_km,
+            suggestedDuration: aiRecommendation.recommendation.duration_min,
+            intensity: aiRecommendation.recommendation.intensity,
+            message: aiRecommendation.message,
+          }
+        : {}),
     };
-    
+
     router.push({
       pathname: "/walk-map",
-      params
+      params,
     } as any);
   };
 
@@ -252,7 +254,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={styles.container}>
       {/* Background Animation */}
       <View
         style={{
@@ -365,15 +367,10 @@ export default function HomeScreen() {
         >
           {dogs.length > 0 ? (
             dogs.map((dog, index) => (
-              <LinearGradient
-                key={dog.id}
-                colors={[
-                  DesignSystemColors.primary[300],
-                  DesignSystemColors.primary[400],
-                  DesignSystemColors.primary[500],
-                ]}
-                style={styles.dogCard}
-              >
+              <View key={dog.id} style={styles.dogCard}>
+                {/* Colored stripe on the left */}
+                <View style={styles.colorStripe} />
+                
                 <View style={styles.dogCardContent}>
                   {/* Left Section - Dog Info */}
                   <View style={styles.dogInfoSection}>
@@ -457,21 +454,23 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 </View>
-              </LinearGradient>
+              </View>
             ))
           ) : (
-            <LinearGradient
-              colors={["#ff6b6b", "#ee5a24"]}
-              style={styles.dogCard}
-            >
-              <View style={styles.dogAvatarContainer}>
-                <View style={styles.dogAvatarPlaceholder}>
-                  <Text style={styles.dogAvatarText}>🐕</Text>
+            <View style={styles.dogCard}>
+              <View style={styles.colorStripe} />
+              <View style={styles.dogCardContent}>
+                <View style={styles.dogInfoSection}>
+                  <View style={styles.dogAvatarContainer}>
+                    <View style={styles.dogAvatarPlaceholder}>
+                      <Text style={styles.dogAvatarText}>🐕</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.dogName}>{mockDog.name}</Text>
+                  <Text style={styles.dogBreed}>{mockDog.breed}</Text>
                 </View>
               </View>
-              <Text style={styles.dogName}>{mockDog.name}</Text>
-              <Text style={styles.dogBreed}>{mockDog.breed}</Text>
-            </LinearGradient>
+            </View>
           )}
         </ScrollView>
       </View>
@@ -492,10 +491,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: "center",
-    marginTop: 70,
+    flex: 1,
   },
   weatherCard: {
+    alignSelf: "center",
+    marginTop: 70,
     width: width * 0.9,
     borderRadius: 24,
     height: undefined,
@@ -517,11 +517,11 @@ const styles = StyleSheet.create({
   },
   dogCard: {
     width: width * 0.9,
+    backgroundColor: "white",
     borderRadius: 24,
-    padding: 24,
+    padding: 0,
     marginRight: 16,
     minHeight: height * 0.25,
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -530,6 +530,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 8,
+    flexDirection: "row" as const,
+    overflow: "hidden" as const,
+  },
+  colorStripe: {
+    width: 10,
+    backgroundColor: DesignSystemColors.primary[500],
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
   },
   dogAvatarContainer: {
     marginBottom: 16,
@@ -539,17 +547,17 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: "#E5E7EB",
   },
   dogAvatarPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
     borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: "#E5E7EB",
   },
   dogAvatarText: {
     fontSize: 32,
@@ -557,14 +565,14 @@ const styles = StyleSheet.create({
   dogName: {
     fontSize: 24,
     fontWeight: "700",
-    color: "white",
+    color: "#374151",
     marginBottom: 4,
-    textAlign: "center",
+    textAlign: "center" as const,
   },
   dogBreed: {
     fontSize: 16,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
+    color: "#6B7280",
+    textAlign: "center" as const,
   },
   header: {
     flexDirection: "row",
@@ -661,44 +669,45 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   dogCardContent: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     flex: 1,
-    alignItems: "stretch",
+    alignItems: "stretch" as const,
+    padding: 20,
   },
   dogInfoSection: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
     paddingRight: 12,
   },
   dogAge: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+    color: "#6B7280",
+    textAlign: "center" as const,
     marginTop: 2,
   },
   dogWeight: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+    color: "#6B7280",
+    textAlign: "center" as const,
     marginTop: 2,
   },
   aiSuggestionsSection: {
     flex: 1,
     paddingLeft: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
   },
   aiSectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "white",
+    color: "#374151",
     marginBottom: 12,
-    textAlign: "center",
+    textAlign: "center" as const,
   },
   aiContentContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
     flex: 1,
   },
   walkingAnimation: {
@@ -708,31 +717,31 @@ const styles = StyleSheet.create({
   },
   aiLoadingText: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+    color: "#6B7280",
+    textAlign: "center" as const,
     lineHeight: 16,
   },
   aiErrorText: {
     fontSize: 12,
     color: "rgba(255, 100, 100, 0.9)",
-    textAlign: "center",
+    textAlign: "center" as const,
     lineHeight: 16,
   },
   aiRecommendationContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   aiRecommendationText: {
     fontSize: 13,
-    color: "white",
-    textAlign: "center",
+    color: "#374151",
+    textAlign: "center" as const,
     marginBottom: 4,
     fontWeight: "500",
   },
   aiIntensityText: {
     fontSize: 11,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+    color: "#6B7280",
+    textAlign: "center" as const,
     fontWeight: "600",
     marginTop: 4,
   },

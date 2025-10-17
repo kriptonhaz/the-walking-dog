@@ -1,111 +1,179 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { View, Text, TouchableOpacity, StyleSheet, ViewProps } from 'react-native';
+import { DesignSystemColors } from '@/constants/theme';
 
-const alertVariants = cva(
-  'rounded-card p-4 border flex-row items-start',
-  {
-    variants: {
-      variant: {
-        default: 'bg-neutral-50 border-neutral-200',
-        success: 'bg-green-50 border-green-200',
-        warning: 'bg-yellow-50 border-yellow-200',
-        error: 'bg-red-50 border-red-200',
-        info: 'bg-blue-50 border-blue-200',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-const titleVariants = cva(
-  'font-semibold text-sm mb-1',
-  {
-    variants: {
-      variant: {
-        default: 'text-neutral-900',
-        success: 'text-green-900',
-        warning: 'text-yellow-900',
-        error: 'text-red-900',
-        info: 'text-blue-900',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-const descriptionVariants = cva(
-  'text-sm',
-  {
-    variants: {
-      variant: {
-        default: 'text-neutral-700',
-        success: 'text-green-700',
-        warning: 'text-yellow-700',
-        error: 'text-red-700',
-        info: 'text-blue-700',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-export interface AlertProps extends VariantProps<typeof alertVariants> {
+export interface AlertProps extends ViewProps {
+  variant?: 'default' | 'destructive' | 'success' | 'warning';
   title?: string;
-  description: string;
-  onClose?: () => void;
+  description?: string;
   icon?: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
+  onClose?: () => void;
+  children?: React.ReactNode;
 }
 
 export const Alert: React.FC<AlertProps> = ({
+  variant = 'default',
   title,
   description,
-  onClose,
   icon,
-  variant,
+  onClose,
+  children,
+  style,
   ...props
 }) => {
-  const alertClass = alertVariants({ variant });
-  const titleClass = titleVariants({ variant });
-  const descriptionClass = descriptionVariants({ variant });
+  const getAlertStyle = () => {
+    let variantStyle;
+    
+    switch (variant) {
+      case 'destructive':
+        variantStyle = styles.alertDestructive;
+        break;
+      case 'success':
+        variantStyle = styles.alertSuccess;
+        break;
+      case 'warning':
+        variantStyle = styles.alertWarning;
+        break;
+      default:
+        variantStyle = styles.alertDefault;
+    }
+    
+    return [styles.alert, variantStyle];
+  };
+
+  const getTitleStyle = () => {
+    switch (variant) {
+      case 'destructive':
+        return styles.titleDestructive;
+      case 'success':
+        return styles.titleSuccess;
+      case 'warning':
+        return styles.titleWarning;
+      default:
+        return styles.titleDefault;
+    }
+  };
+
+  const getDescriptionStyle = () => {
+    switch (variant) {
+      case 'destructive':
+        return styles.descriptionDestructive;
+      case 'success':
+        return styles.descriptionSuccess;
+      case 'warning':
+        return styles.descriptionWarning;
+      default:
+        return styles.descriptionDefault;
+    }
+  };
 
   return (
-    <View className={alertClass} {...props}>
+    <View style={[getAlertStyle(), style]} {...props}>
       {icon && (
-        <View className="mr-3 mt-0.5">
+        <View style={styles.iconContainer}>
           {icon}
         </View>
       )}
       
-      <View className="flex-1">
+      <View style={styles.contentContainer}>
         {title && (
-          <Text className={titleClass}>
+          <Text style={[styles.title, getTitleStyle()]}>
             {title}
           </Text>
         )}
-        <Text className={descriptionClass}>
-          {description}
-        </Text>
+        {description && (
+          <Text style={[styles.description, getDescriptionStyle()]}>
+            {description}
+          </Text>
+        )}
+        {children}
       </View>
-
+      
       {onClose && (
         <TouchableOpacity
+          style={styles.closeButton}
           onPress={onClose}
-          className="ml-3 p-1"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text className="text-neutral-400 text-lg font-bold">×</Text>
+          <Text style={styles.closeButtonText}>×</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  alert: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  alertDefault: {
+    backgroundColor: DesignSystemColors.background.primary,
+    borderColor: DesignSystemColors.border.default,
+  },
+  alertDestructive: {
+    backgroundColor: '#fef2f2',
+    borderColor: DesignSystemColors.semantic.error,
+  },
+  alertSuccess: {
+    backgroundColor: '#f0fdf4',
+    borderColor: DesignSystemColors.semantic.success,
+  },
+  alertWarning: {
+    backgroundColor: '#fffbeb',
+    borderColor: DesignSystemColors.semantic.warning,
+  },
+  iconContainer: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  titleDefault: {
+    color: DesignSystemColors.text.primary,
+  },
+  titleDestructive: {
+    color: DesignSystemColors.semantic.error,
+  },
+  titleSuccess: {
+    color: DesignSystemColors.semantic.success,
+  },
+  titleWarning: {
+    color: DesignSystemColors.semantic.warning,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  descriptionDefault: {
+    color: DesignSystemColors.text.secondary,
+  },
+  descriptionDestructive: {
+    color: '#dc2626',
+  },
+  descriptionSuccess: {
+    color: '#16a34a',
+  },
+  descriptionWarning: {
+    color: '#d97706',
+  },
+  closeButton: {
+    marginLeft: 12,
+    padding: 4,
+  },
+  closeButtonText: {
+    color: DesignSystemColors.text.secondary,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
 
 export default Alert;

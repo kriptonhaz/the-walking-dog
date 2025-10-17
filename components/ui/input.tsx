@@ -1,40 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, TextInputProps } from 'react-native';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, TextInputProps } from 'react-native';
+import { DesignSystemColors } from '@/constants/theme';
 
-const inputVariants = cva(
-  'border rounded-input px-3 py-3 text-base text-text-primary bg-white',
-  {
-    variants: {
-      variant: {
-        default: 'border-neutral-300 focus:border-primary',
-        error: 'border-red-500',
-        success: 'border-green-500',
-      },
-      size: {
-        sm: 'px-2 py-2 text-sm',
-        md: 'px-3 py-3 text-base',
-        lg: 'px-4 py-4 text-lg',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-    },
-  }
-);
-
-export interface InputProps extends Omit<TextInputProps, 'style'>, VariantProps<typeof inputVariants> {
+export interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   success?: string;
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  onRightIconPress?: () => void;
   variant?: 'default' | 'error' | 'success';
   size?: 'sm' | 'md' | 'lg';
-  containerClassName?: string;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -44,68 +20,76 @@ export const Input: React.FC<InputProps> = ({
   helperText,
   leftIcon,
   rightIcon,
-  onRightIconPress,
-  variant,
-  size,
-  containerClassName = '',
+  variant = 'default',
+  size = 'md',
+  style,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
-  // Determine variant based on error/success state
-  const currentVariant = error ? 'error' : success ? 'success' : variant || 'default';
-  
-  const inputClass = inputVariants({ variant: currentVariant, size });
-  const focusedClass = isFocused && !error ? 'border-primary' : '';
+  const getInputStyle = () => {
+    let sizeStyle;
+    let stateStyle;
+    let iconStyle = {};
+
+    if (size === 'sm') sizeStyle = styles.inputSm;
+    else if (size === 'lg') sizeStyle = styles.inputLg;
+    else sizeStyle = styles.inputMd;
+
+    if (error) stateStyle = styles.inputError;
+    else if (success) stateStyle = styles.inputSuccess;
+    else if (isFocused) stateStyle = styles.inputFocused;
+
+    if (leftIcon) iconStyle = { ...iconStyle, ...styles.inputWithLeftIcon };
+    if (rightIcon) iconStyle = { ...iconStyle, ...styles.inputWithRightIcon };
+
+    return [styles.input, sizeStyle, stateStyle, iconStyle];
+  };
 
   return (
-    <View className={containerClassName}>
+    <View style={styles.container}>
       {label && (
-        <Text className="text-sm font-medium text-text-primary mb-2">
+        <Text style={styles.label}>
           {label}
         </Text>
       )}
       
-      <View className="relative">
+      <View style={styles.inputContainer}>
         {leftIcon && (
-          <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+          <View style={styles.leftIconContainer}>
             {leftIcon}
           </View>
         )}
         
         <TextInput
-          className={`${inputClass} ${focusedClass} ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''}`}
+          style={[getInputStyle(), style]}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={DesignSystemColors.text.secondary}
           {...props}
         />
         
         {rightIcon && (
-          <TouchableOpacity
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            onPress={onRightIconPress}
-            disabled={!onRightIconPress}
-          >
+          <View style={styles.rightIconContainer}>
             {rightIcon}
-          </TouchableOpacity>
+          </View>
         )}
       </View>
       
       {(error || success || helperText) && (
-        <View className="mt-1">
+        <View style={styles.messageContainer}>
           {error && (
-            <Text className="text-sm text-red-500">
+            <Text style={styles.errorText}>
               {error}
             </Text>
           )}
-          {success && !error && (
-            <Text className="text-sm text-green-500">
+          {success && (
+            <Text style={styles.successText}>
               {success}
             </Text>
           )}
           {helperText && !error && !success && (
-            <Text className="text-sm text-text-secondary">
+            <Text style={styles.helperText}>
               {helperText}
             </Text>
           )}
@@ -114,5 +98,86 @@ export const Input: React.FC<InputProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: DesignSystemColors.text.primary,
+    marginBottom: 8,
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  input: {
+    backgroundColor: DesignSystemColors.background.primary,
+    borderWidth: 1,
+    borderColor: DesignSystemColors.border.default,
+    borderRadius: 8,
+    fontSize: 14,
+    color: DesignSystemColors.text.primary,
+  },
+  inputSm: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    minHeight: 32,
+  },
+  inputMd: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 40,
+  },
+  inputLg: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    minHeight: 48,
+  },
+  inputError: {
+    borderColor: DesignSystemColors.semantic.error,
+  },
+  inputSuccess: {
+    borderColor: DesignSystemColors.semantic.success,
+  },
+  inputFocused: {
+    borderColor: DesignSystemColors.primary[500],
+  },
+  inputWithLeftIcon: {
+    paddingLeft: 40,
+  },
+  inputWithRightIcon: {
+    paddingRight: 40,
+  },
+  leftIconContainer: {
+    position: 'absolute',
+    left: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    zIndex: 10,
+  },
+  rightIconContainer: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+  },
+  messageContainer: {
+    marginTop: 4,
+  },
+  errorText: {
+    fontSize: 12,
+    color: DesignSystemColors.semantic.error,
+  },
+  successText: {
+    fontSize: 12,
+    color: DesignSystemColors.semantic.success,
+  },
+  helperText: {
+    fontSize: 12,
+    color: DesignSystemColors.text.secondary,
+  },
+});
 
 export default Input;

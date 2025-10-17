@@ -1,8 +1,7 @@
-import { Button, Card, CardContent } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { DesignSystemColors } from "@/constants/theme";
 import { useDogStore } from "@/store/dogStore";
 import { useWalkStore, WalkEntry } from "@/store/walkStore";
-import { LinearGradient } from "expo-linear-gradient";
 import LottieView from "lottie-react-native";
 import React, { useState } from "react";
 import {
@@ -84,7 +83,7 @@ export default function JournalScreen() {
       <View style={styles.walkCard}>
         {/* Colored stripe on the left */}
         <View style={styles.colorStripe} />
-        
+
         <View style={styles.walkCardContent}>
           {/* Left Section - Dog Info */}
           <View style={styles.dogInfoSection}>
@@ -153,8 +152,8 @@ export default function JournalScreen() {
         resizeMode="cover"
       />
 
-      <SafeAreaView className="flex-1 bg-transparent">
-        <View className="flex-1 px-6 py-8">
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
           {/* Calendar Section */}
           <Card
             variant="default"
@@ -231,24 +230,13 @@ export default function JournalScreen() {
 
           {/* Empty State for no walks at all */}
           {walks.length === 0 && (
-            <Card variant="default" padding="lg">
-              <View className="items-center py-8">
-                <Text className="text-6xl mb-4">🐕</Text>
-                <Text className="text-lg font-semibold text-text-primary mb-2">
-                  No walks yet!
-                </Text>
-                <Text className="text-text-secondary text-center mb-4">
-                  Start your first walk to see it appear in your journal
-                </Text>
-                <Button
-                  title="Start Walking"
-                  variant="primary"
-                  onPress={() => {
-                    /* TODO: Navigate to walk screen */
-                  }}
-                />
-              </View>
-            </Card>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>🐕</Text>
+              <Text style={styles.emptyTitle}>No walks yet</Text>
+              <Text style={styles.emptyDescription}>
+                Start your first walk to see it here!
+              </Text>
+            </View>
           )}
         </View>
       </SafeAreaView>
@@ -259,6 +247,34 @@ export default function JournalScreen() {
 const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: 32,
+  },
+  emptyIcon: {
+    fontSize: 96,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: DesignSystemColors.text.primary,
+    marginBottom: 8,
+  },
+  emptyDescription: {
+    color: DesignSystemColors.text.secondary,
+    textAlign: "center",
+    marginBottom: 16,
+  },
   walkCard: {
     width: width * 0.9,
     backgroundColor: "white",
@@ -278,7 +294,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   colorStripe: {
-    width: 6,
+    width: 10,
     backgroundColor: "#10B981",
     borderTopLeftRadius: 24,
     borderBottomLeftRadius: 24,

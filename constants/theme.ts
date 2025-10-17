@@ -11,17 +11,17 @@ const tintColorDark = '#fff';
 // Design System Colors - matching global.css
 export const DesignSystemColors = {
   primary: {
-    50: '#fdf8f3',
-    100: '#faf0e6',
-    200: '#f4dcc6',
-    300: '#edc299',
-    400: '#e4a066',
-    500: '#c97c41', // Main primary color
-    600: '#b56a35',
-    700: '#96552b',
-    800: '#7a4525',
-    900: '#653a21',
-    950: '#3a1f11',
+    50: '#f0f9ff',
+    100: '#e0f2fe',
+    200: '#bae6fd',
+    300: '#7dd3fc',
+    400: '#38bdf8',
+    500: '#387ca0', // Main primary color
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
+    950: '#172554',
   },
   secondary: {
     50: '#fffbeb',

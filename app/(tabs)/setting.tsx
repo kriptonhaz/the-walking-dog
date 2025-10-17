@@ -1,23 +1,51 @@
-import { Card, CardContent, CardHeader } from "@/components/ui";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DesignSystemColors } from "@/constants/theme";
+import { useDogStore } from "@/store/dogStore";
+import { useWalkStore } from "@/store/walkStore";
 import LottieView from "lottie-react-native";
 import React, { useState } from "react";
 import {
+  Alert,
   Dimensions,
   SafeAreaView,
+  StyleSheet,
   Switch,
   Text,
   View,
-  Alert,
 } from "react-native";
-import { useDogStore } from "@/store/dogStore";
-import { useWalkStore } from "@/store/walkStore";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 64,
+  },
+  settingsTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: DesignSystemColors.text.primary,
+  },
+  notificationRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  notificationLabel: {
+    fontSize: 18,
+    fontWeight: "500",
+    color: DesignSystemColors.text.primary,
+  },
+});
+
+const { width, height } = Dimensions.get("window");
 
 export default function SettingScreen() {
-  const [reminderNotifications, setReminderNotifications] = useState(true);
-  const { width, height } = Dimensions.get("window");
-  
-  // Store hooks
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const clearAllDogs = useDogStore((state) => state.clearAll);
   const clearAllWalks = useWalkStore((state) => state.clearAll);
 
@@ -31,7 +59,7 @@ export default function SettingScreen() {
           style: "cancel",
         },
         {
-          text: "Clear Data",
+          text: "Clear",
           style: "destructive",
           onPress: () => {
             clearAllDogs();
@@ -44,7 +72,7 @@ export default function SettingScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       {/* Background Animation */}
       <LottieView
         source={require("../../assets/animations/moving-grass.json")}
@@ -58,59 +86,38 @@ export default function SettingScreen() {
         }}
         resizeMode="cover"
       />
-
-      <SafeAreaView className="flex-1 bg-transparent">
-        <View className="flex-1 px-6 pt-16">
-          {/* Settings Card */}
-          <Card
-            variant="default"
-            padding="lg"
-            style={{
-              width: "90%",
-              alignSelf: "center",
-              backgroundColor: "white",
-              padding: 20,
-            }}
-          >
-            <CardHeader>
-              <View style={{ alignItems: "center" }}>
-                <Text className="text-xl font-bold text-text-primary">
-                  Settings
-                </Text>
-              </View>
-            </CardHeader>
-            <CardContent>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 20,
-                }}
-              >
-                <Text className="text-lg font-medium text-text-primary">
-                  Walk Reminders
-                </Text>
-                <Switch
-                  value={reminderNotifications}
-                  onValueChange={setReminderNotifications}
-                  trackColor={{ false: "#D1D5DB", true: "#10B981" }}
-                  thumbColor={reminderNotifications ? "#ffffff" : "#ffffff"}
-                  ios_backgroundColor="#D1D5DB"
-                />
-              </View>
-              
+      <View style={styles.content}>
+        <Card
+          style={{
+            width: "90%",
+            alignSelf: "center",
+            backgroundColor: "white",
+          }}
+        >
+          <CardHeader>
+            <View style={{ alignItems: "center" }}>
+              <Text style={styles.settingsTitle}>Settings</Text>
+            </View>
+          </CardHeader>
+          <CardContent>
+            <View style={styles.notificationRow}>
+              <Text style={styles.notificationLabel}>Notifications</Text>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+              />
+            </View>
+            <View style={{ marginTop: 16 }}>
               <Button
                 title="Clear Data"
                 variant="destructive"
-                size="md"
                 onPress={handleClearData}
                 style={{ width: "100%" }}
               />
-            </CardContent>
-          </Card>
-        </View>
-      </SafeAreaView>
-    </View>
+            </View>
+          </CardContent>
+        </Card>
+      </View>
+    </SafeAreaView>
   );
 }

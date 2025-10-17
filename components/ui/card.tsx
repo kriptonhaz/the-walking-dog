@@ -1,122 +1,182 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ViewStyle } from 'react-native';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { View, ViewProps, StyleSheet, Text, TextProps } from 'react-native';
+import { DesignSystemColors } from '@/constants/theme';
 
-const cardVariants = cva(
-  'rounded-card bg-white border border-neutral-200 shadow-sm',
-  {
-    variants: {
-      variant: {
-        default: 'bg-white border-neutral-200',
-        elevated: 'bg-white border-neutral-200 shadow-md',
-        outlined: 'bg-transparent border-2 border-primary',
-      },
-      padding: {
-        none: 'p-0',
-        sm: 'p-3',
-        md: 'p-4',
-        lg: 'p-6',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      padding: 'md',
-    },
-  }
-);
-
-export interface CardProps extends VariantProps<typeof cardVariants> {
-  children: React.ReactNode;
-  onPress?: () => void;
-  style?: ViewStyle;
-  variant?: 'default' | 'elevated' | 'outlined';
+export interface CardProps extends ViewProps {
+  variant?: 'default' | 'outline' | 'ghost';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
+const styles = StyleSheet.create({
+  cardDefault: {
+    backgroundColor: DesignSystemColors.background.primary,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: DesignSystemColors.border.default,
+    borderRadius: 12,
+  },
+  cardGhost: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+  },
+  paddingNone: {
+    padding: 0,
+  },
+  paddingSm: {
+    padding: 12,
+  },
+  paddingMd: {
+    padding: 16,
+  },
+  paddingLg: {
+    padding: 24,
+  },
+});
+
 export const Card: React.FC<CardProps> = ({
-  children,
-  onPress,
+  variant = 'default',
+  padding = 'md',
   style,
-  variant,
-  padding,
+  children,
   ...props
 }) => {
-  const cardClass = cardVariants({ variant, padding });
-
-  if (onPress) {
-    return (
-      <TouchableOpacity
-        className={`${cardClass} active:opacity-95`}
-        onPress={onPress}
-        style={style}
-        activeOpacity={0.95}
-        {...props}
-      >
-        {children}
-      </TouchableOpacity>
-    );
-  }
+  const baseStyle = variant === 'default' ? styles.cardDefault :
+                   variant === 'outline' ? styles.cardOutline :
+                   styles.cardGhost;
+  
+  const paddingStyle = padding === 'none' ? styles.paddingNone :
+                      padding === 'sm' ? styles.paddingSm :
+                      padding === 'md' ? styles.paddingMd :
+                      styles.paddingLg;
 
   return (
-    <View className={cardClass} style={style} {...props}>
+    <View style={[baseStyle, paddingStyle, style]} {...props}>
       {children}
     </View>
   );
 };
 
-export interface CardHeaderProps {
-  children: React.ReactNode;
+export interface CardHeaderProps extends ViewProps {
   className?: string;
 }
 
-export const CardHeader: React.FC<CardHeaderProps> = ({ children, className = '' }) => (
-  <View className={`mb-4 ${className}`}>
-    {children}
-  </View>
-);
+export const CardHeader: React.FC<CardHeaderProps> = ({
+  style,
+  children,
+  ...props
+}) => {
+  const headerStyle = [
+    {
+      marginBottom: 16,
+    },
+    style,
+  ];
 
-export interface CardTitleProps {
-  children: React.ReactNode;
+  return (
+    <View style={headerStyle} {...props}>
+      {children}
+    </View>
+  );
+};
+
+export interface CardTitleProps extends TextProps {
   className?: string;
 }
 
-export const CardTitle: React.FC<CardTitleProps> = ({ children, className = '' }) => (
-  <Text className={`text-lg font-semibold text-text-primary mb-1 ${className}`}>
-    {children}
-  </Text>
-);
+export const CardTitle: React.FC<CardTitleProps> = ({
+  style,
+  children,
+  ...props
+}) => {
+  const titleStyle = [
+    {
+      fontSize: 18,
+      fontWeight: '600' as const,
+      color: DesignSystemColors.text.primary,
+      marginBottom: 4,
+    },
+    style,
+  ];
 
-export interface CardDescriptionProps {
-  children: React.ReactNode;
+  return (
+    <Text style={titleStyle} {...props}>
+      {children}
+    </Text>
+  );
+};
+
+export interface CardDescriptionProps extends TextProps {
   className?: string;
 }
 
-export const CardDescription: React.FC<CardDescriptionProps> = ({ children, className = '' }) => (
-  <Text className={`text-sm text-text-secondary ${className}`}>
-    {children}
-  </Text>
-);
+export const CardDescription: React.FC<CardDescriptionProps> = ({
+  style,
+  children,
+  ...props
+}) => {
+  const descriptionStyle = [
+    {
+      fontSize: 14,
+      color: DesignSystemColors.text.secondary,
+    },
+    style,
+  ];
 
-export interface CardContentProps {
-  children: React.ReactNode;
+  return (
+    <Text style={descriptionStyle} {...props}>
+      {children}
+    </Text>
+  );
+};
+
+export interface CardContentProps extends ViewProps {
   className?: string;
 }
 
-export const CardContent: React.FC<CardContentProps> = ({ children, className = '' }) => (
-  <View className={className}>
-    {children}
-  </View>
-);
+export const CardContent: React.FC<CardContentProps> = ({
+  style,
+  children,
+  ...props
+}) => {
+  return (
+    <View style={style} {...props}>
+      {children}
+    </View>
+  );
+};
 
-export interface CardFooterProps {
-  children: React.ReactNode;
+export interface CardFooterProps extends ViewProps {
   className?: string;
 }
 
-export const CardFooter: React.FC<CardFooterProps> = ({ children, className = '' }) => (
-  <View className={`mt-4 flex-row justify-end ${className}`}>
-    {children}
-  </View>
-);
+export const CardFooter: React.FC<CardFooterProps> = ({
+  style,
+  children,
+  ...props
+}) => {
+  const footerStyle = [
+    {
+      marginTop: 16,
+      flexDirection: 'row' as const,
+      justifyContent: 'flex-end' as const,
+    },
+    style,
+  ];
 
-export default Card;
+  return (
+    <View style={footerStyle} {...props}>
+      {children}
+    </View>
+  );
+};
