@@ -1,28 +1,47 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import { Card, CardContent, CardHeader } from "@/components/ui";
+import { Button } from "@/components/ui/button";
 import LottieView from "lottie-react-native";
 import React, { useState } from "react";
 import {
   Dimensions,
   SafeAreaView,
-  ScrollView,
   Switch,
   Text,
   View,
+  Alert,
 } from "react-native";
-
-interface SettingItem {
-  id: string;
-  title: string;
-  description?: string;
-  type: "toggle" | "navigation" | "action";
-  value?: boolean;
-  onPress?: () => void;
-  onToggle?: (value: boolean) => void;
-}
+import { useDogStore } from "@/store/dogStore";
+import { useWalkStore } from "@/store/walkStore";
 
 export default function SettingScreen() {
   const [reminderNotifications, setReminderNotifications] = useState(true);
   const { width, height } = Dimensions.get("window");
+  
+  // Store hooks
+  const clearAllDogs = useDogStore((state) => state.clearAll);
+  const clearAllWalks = useWalkStore((state) => state.clearAll);
+
+  const handleClearData = () => {
+    Alert.alert(
+      "Clear All Data",
+      "Are you sure you want to clear all dog and walk data? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Clear Data",
+          style: "destructive",
+          onPress: () => {
+            clearAllDogs();
+            clearAllWalks();
+            Alert.alert("Success", "All data has been cleared.");
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -41,32 +60,37 @@ export default function SettingScreen() {
       />
 
       <SafeAreaView className="flex-1 bg-transparent">
-        <ScrollView className="flex-1 px-6 py-8">
-          {/* Header */}
-          <View className="mb-6">
-            <Text className="text-2xl font-bold text-text-primary mb-2">
-              Settings
-            </Text>
-            <Text className="text-text-secondary">
-              Customize your walking experience
-            </Text>
-          </View>
-
-          {/* Reminder Notifications Section */}
-          <Card variant="default" padding="lg" style={{ marginBottom: 24 }}>
+        <View className="flex-1 px-6 pt-16">
+          {/* Settings Card */}
+          <Card
+            variant="default"
+            padding="lg"
+            style={{
+              width: "90%",
+              alignSelf: "center",
+              backgroundColor: "white",
+              padding: 20,
+            }}
+          >
             <CardHeader>
-              <CardTitle>Notifications</CardTitle>
+              <View style={{ alignItems: "center" }}>
+                <Text className="text-xl font-bold text-text-primary">
+                  Settings
+                </Text>
+              </View>
             </CardHeader>
             <CardContent>
-              <View className="flex-row justify-between items-center py-4">
-                <View className="flex-1 mr-4">
-                  <Text className="text-lg font-semibold text-text-primary mb-1">
-                    Walk Reminders
-                  </Text>
-                  <Text className="text-text-secondary text-sm">
-                    Get daily reminders to walk your dog at your preferred times
-                  </Text>
-                </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 20,
+                }}
+              >
+                <Text className="text-lg font-medium text-text-primary">
+                  Walk Reminders
+                </Text>
                 <Switch
                   value={reminderNotifications}
                   onValueChange={setReminderNotifications}
@@ -75,77 +99,17 @@ export default function SettingScreen() {
                   ios_backgroundColor="#D1D5DB"
                 />
               </View>
-
-              {reminderNotifications && (
-                <View className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <Text className="text-green-800 text-sm font-medium mb-2">
-                    ✅ Reminders Enabled
-                  </Text>
-                  <Text className="text-green-700 text-sm">
-                    You'll receive daily notifications to remind you to walk
-                    your furry friend. Stay consistent with your walking
-                    routine!
-                  </Text>
-                </View>
-              )}
-
-              {!reminderNotifications && (
-                <View className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <Text className="text-gray-600 text-sm">
-                    Reminder notifications are currently disabled. Enable them
-                    to stay on track with your dog's walking schedule.
-                  </Text>
-                </View>
-              )}
+              
+              <Button
+                title="Clear Data"
+                variant="destructive"
+                size="md"
+                onPress={handleClearData}
+                style={{ width: "100%" }}
+              />
             </CardContent>
           </Card>
-
-          {/* Coming Soon Section */}
-          <Card variant="default" padding="lg" style={{ marginBottom: 24 }}>
-            <CardHeader>
-              <CardTitle>More Settings Coming Soon</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <View className="items-center py-6">
-                <Text className="text-4xl mb-3">⚙️</Text>
-                <Text className="text-lg font-semibold text-text-primary mb-2">
-                  Additional Features
-                </Text>
-                <Text className="text-text-secondary text-center text-sm">
-                  We're working on more customization options including:
-                </Text>
-                <View className="mt-4 space-y-2">
-                  <Text className="text-text-secondary text-sm">
-                    • Weather alerts and notifications
-                  </Text>
-                  <Text className="text-text-secondary text-sm">
-                    • Location tracking preferences
-                  </Text>
-                  <Text className="text-text-secondary text-sm">
-                    • Dog profile management
-                  </Text>
-                  <Text className="text-text-secondary text-sm">
-                    • Data export and privacy controls
-                  </Text>
-                </View>
-              </View>
-            </CardContent>
-          </Card>
-
-          {/* App Info */}
-          <Card variant="default" padding="lg">
-            <CardContent>
-              <View className="items-center py-4">
-                <Text className="text-text-secondary text-sm mb-2">
-                  The Walking Dog App
-                </Text>
-                <Text className="text-text-secondary text-xs">
-                  Version 1.0.0
-                </Text>
-              </View>
-            </CardContent>
-          </Card>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </View>
   );
