@@ -773,7 +773,7 @@ export default function WalkScreen() {
               title="Register Dog"
               onPress={handleSubmit(onSubmit)}
               style={{
-                backgroundColor: DesignSystemColors.primary[600],
+                backgroundColor: DesignSystemColors.primary[500],
                 borderRadius: 16,
                 paddingVertical: 18,
                 shadowColor: DesignSystemColors.primary[600],
