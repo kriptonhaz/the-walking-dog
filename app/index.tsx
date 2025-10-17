@@ -16,8 +16,8 @@ export default function LandingScreen() {
       // If there are dogs in the store, go to home screen
       router.push("/(tabs)");
     } else {
-      // If no dogs, go to walk screen to register first dog
-      router.push("/walk" as any);
+      // If no dogs, go to dog-detail screen to register first dog
+      router.push("/dog-detail" as any);
     }
   };
 

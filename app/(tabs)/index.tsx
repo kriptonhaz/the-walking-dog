@@ -1,11 +1,24 @@
+import { Button } from "@/components/ui/button";
+import { DesignSystemColors } from "@/constants/theme";
+import {
+  useAiOpenRouter,
+  WalkRecommendationRequest,
+} from "@/hooks/use-ai-openrouter";
 import { useWeather } from "@/hooks/use-weather";
 import { WeatherService } from "@/services/weather-api";
 import { useDogStore } from "@/store/dogStore";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
-import React, { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -89,6 +102,8 @@ interface DogInfo {
   name: string;
   breed: string;
   age: number;
+  weight?: number;
+  gender?: "male" | "female";
   lastWalk?: string;
   photo?: string;
 }
@@ -114,14 +129,51 @@ const mockDog: DogInfo = {
 };
 
 export default function HomeScreen() {
-  const { dogs } = useDogStore();
+  const { dogs, clearAll } = useDogStore();
   const { weather, isLoading: isLoadingWeather, refetch } = useWeather();
-  const [currentWelcomeIndex, setCurrentWelcomeIndex] = useState(0);
+
+  // Welcome message state
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  const currentWeather = weather || WeatherService.getMockWeather();
+  const currentDog = dogs.length > 0 ? dogs[0] : mockDog;
+
+  // Prepare AI recommendation request
+  const aiRequest: WalkRecommendationRequest | null = useMemo(() => {
+    if (!currentWeather || !currentDog) return null;
+
+    return {
+      dogBreed: currentDog.breed,
+      dogAge: currentDog.age,
+      dogWeight: currentDog.weight || 25, // Default weight if not provided
+      dogGender: currentDog.gender || "male", // Default gender if not provided
+      weather: {
+        temperature: currentWeather.temperature,
+        condition: currentWeather.condition,
+        humidity: currentWeather.humidity || 65,
+        windSpeed: currentWeather.windSpeed,
+      },
+      location: currentWeather.location,
+    };
+  }, [currentWeather, currentDog]);
+
+  // Use AI recommendation hook with caching
+  const {
+    data: aiRecommendation,
+    isLoading: isLoadingAI,
+    error: aiError,
+  } = useAiOpenRouter(aiRequest, {
+    enabled: !!aiRequest,
+    staleTime: 1000 * 60 * 30, // 30 minutes cache
+    gcTime: 1000 * 60 * 60, // 1 hour garbage collection
+  });
 
   // Rotate welcome message every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentWelcomeIndex(
+      setCurrentMessageIndex(
         (prevIndex) => (prevIndex + 1) % welcomeMessages.length
       );
     }, 5000);
@@ -129,16 +181,48 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Typing effect for welcome messages
+  useEffect(() => {
+    const currentMessage = welcomeMessages[currentMessageIndex];
+    setDisplayedText("");
+    setIsTyping(true);
+    
+    let charIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (charIndex < currentMessage.length) {
+        setDisplayedText(currentMessage.slice(0, charIndex + 1));
+        charIndex++;
+      } else {
+        setIsTyping(false);
+        clearInterval(typingInterval);
+      }
+    }, 50); // 50ms per character for smooth typing
+
+    return () => clearInterval(typingInterval);
+  }, [currentMessageIndex]);
+
   const handleStartWalk = () => {
-    router.push("/(tabs)/../walk" as any);
+    // Pass AI recommendation data and dog ID to walk-map screen
+    const params = {
+      dogId: dogs.length > 0 ? dogs[0].id : 'default-dog-id',
+      ...(aiRecommendation ? {
+        suggestedDistance: aiRecommendation.recommendation.distance_km,
+        suggestedDuration: aiRecommendation.recommendation.duration_min,
+        intensity: aiRecommendation.recommendation.intensity,
+        message: aiRecommendation.message
+      } : {})
+    };
+    
+    router.push({
+      pathname: "/walk-map",
+      params
+    } as any);
   };
 
   useEffect(() => {
     console.log(weather);
-  }, [weather]);
-
-  const currentWeather = weather || WeatherService.getMockWeather();
-  const currentDog = dogs.length > 0 ? dogs[0] : mockDog;
+    console.log("AI Recommendation:", aiRecommendation);
+  }, [weather, dogs, aiRecommendation]);
 
   // Get current date
   const getCurrentDate = () => {
@@ -267,19 +351,154 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
       </View>
+      {/* Dog Carousel */}
+      <View style={styles.carouselContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContent}
+          decelerationRate="fast"
+          snapToInterval={width * 0.9 + 16}
+          snapToAlignment="center"
+          bounces={false}
+          pagingEnabled={dogs.length === 1}
+        >
+          {dogs.length > 0 ? (
+            dogs.map((dog, index) => (
+              <LinearGradient
+                key={dog.id}
+                colors={[
+                  DesignSystemColors.primary[300],
+                  DesignSystemColors.primary[400],
+                  DesignSystemColors.primary[500],
+                ]}
+                style={styles.dogCard}
+              >
+                <View style={styles.dogCardContent}>
+                  {/* Left Section - Dog Info */}
+                  <View style={styles.dogInfoSection}>
+                    <View style={styles.dogAvatarContainer}>
+                      {dog.photo ? (
+                        <Image
+                          source={{ uri: dog.photo }}
+                          style={styles.dogAvatar}
+                          resizeMode="cover"
+                          onError={(error) => {
+                            console.log(
+                              "Image load error:",
+                              error.nativeEvent.error
+                            );
+                          }}
+                        />
+                      ) : (
+                        <View style={styles.dogAvatarPlaceholder}>
+                          <Text style={styles.dogAvatarText}>🐕</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.dogName}>{dog.name}</Text>
+                    <Text style={styles.dogBreed}>{dog.breed}</Text>
+                    <Text style={styles.dogAge}>{dog.age} years old</Text>
+                    {dog.weight && (
+                      <Text style={styles.dogWeight}>{dog.weight} kg</Text>
+                    )}
+                  </View>
+
+                  {/* Right Section - AI Walking Suggestions */}
+                  <View style={styles.aiSuggestionsSection}>
+                    <Text style={styles.aiSectionTitle}>
+                      Walking Suggestions
+                    </Text>
+                    <View style={styles.aiContentContainer}>
+                      {isLoadingAI ? (
+                        <>
+                          <LottieView
+                            source={require("@/assets/animations/dog-walking-2.json")}
+                            autoPlay
+                            loop
+                            style={styles.walkingAnimation}
+                          />
+                          <Text style={styles.aiLoadingText}>
+                            Getting personalized suggestions...
+                          </Text>
+                        </>
+                      ) : aiError ? (
+                        <Text style={styles.aiErrorText}>
+                          Unable to get suggestions
+                        </Text>
+                      ) : aiRecommendation ? (
+                        <View style={styles.aiRecommendationContainer}>
+                          <Text style={styles.aiRecommendationText}>
+                            {aiRecommendation.recommendation.distance_km} km
+                            walk
+                          </Text>
+                          <Text style={styles.aiRecommendationText}>
+                            {aiRecommendation.recommendation.duration_min}{" "}
+                            minutes
+                          </Text>
+                          <Text style={styles.aiIntensityText}>
+                            {aiRecommendation.recommendation.intensity.toUpperCase()}{" "}
+                            intensity
+                          </Text>
+                        </View>
+                      ) : (
+                        <>
+                          <LottieView
+                            source={require("@/assets/animations/dog-walking-2.json")}
+                            autoPlay
+                            loop
+                            style={styles.walkingAnimation}
+                          />
+                          <Text style={styles.aiLoadingText}>
+                            Getting personalized suggestions...
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </LinearGradient>
+            ))
+          ) : (
+            <LinearGradient
+              colors={["#ff6b6b", "#ee5a24"]}
+              style={styles.dogCard}
+            >
+              <View style={styles.dogAvatarContainer}>
+                <View style={styles.dogAvatarPlaceholder}>
+                  <Text style={styles.dogAvatarText}>🐕</Text>
+                </View>
+              </View>
+              <Text style={styles.dogName}>{mockDog.name}</Text>
+              <Text style={styles.dogBreed}>{mockDog.breed}</Text>
+            </LinearGradient>
+          )}
+        </ScrollView>
+      </View>
+
+      {/* Take a Walk Button */}
+      <View style={styles.buttonContainer}>
+        <Button
+          title={displayedText + (isTyping ? "|" : "")}
+          onPress={handleStartWalk}
+          variant="primary"
+          size="lg"
+          style={styles.walkButton}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignSelf: "center",
     marginTop: 70,
   },
   weatherCard: {
     width: width * 0.9,
     borderRadius: 24,
+    height: undefined,
     padding: 24,
     shadowColor: "#000",
     shadowOffset: {
@@ -290,11 +509,68 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
+  carouselContainer: {
+    marginTop: 20,
+  },
+  carouselContent: {
+    paddingHorizontal: width * 0.05, // Same padding as weather card to align properly
+  },
+  dogCard: {
+    width: width * 0.9,
+    borderRadius: 24,
+    padding: 24,
+    marginRight: 16,
+    minHeight: height * 0.25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  dogAvatarContainer: {
+    marginBottom: 16,
+  },
+  dogAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  dogAvatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+  dogAvatarText: {
+    fontSize: 32,
+  },
+  dogName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "white",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  dogBreed: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.9)",
+    textAlign: "center",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   location: {
     fontSize: 20,
@@ -306,21 +582,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.8)",
   },
-  notificationIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bellIcon: {
-    fontSize: 16,
-  },
   mainWeatherInfo: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 16,
   },
   weatherIconContainer: {
     width: 120,
@@ -385,5 +650,90 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "white",
+  },
+  buttonContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+    paddingHorizontal: width * 0.05,
+  },
+  walkButton: {
+    width: width * 0.9,
+    alignSelf: "center",
+  },
+  dogCardContent: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "stretch",
+  },
+  dogInfoSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingRight: 12,
+  },
+  dogAge: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+    marginTop: 2,
+  },
+  dogWeight: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+    marginTop: 2,
+  },
+  aiSuggestionsSection: {
+    flex: 1,
+    paddingLeft: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  aiSectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "white",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  aiContentContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  walkingAnimation: {
+    width: 80,
+    height: 80,
+    marginBottom: 8,
+  },
+  aiLoadingText: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  aiErrorText: {
+    fontSize: 12,
+    color: "rgba(255, 100, 100, 0.9)",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  aiRecommendationContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiRecommendationText: {
+    fontSize: 13,
+    color: "white",
+    textAlign: "center",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  aiIntensityText: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+    fontWeight: "600",
+    marginTop: 4,
   },
 });
