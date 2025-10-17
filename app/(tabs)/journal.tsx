@@ -1,57 +1,20 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui";
+import { Button, Card, CardContent } from "@/components/ui";
+import { DesignSystemColors } from "@/constants/theme";
+import { useDogStore } from "@/store/dogStore";
+import { useWalkStore, WalkEntry } from "@/store/walkStore";
+import { LinearGradient } from "expo-linear-gradient";
 import LottieView from "lottie-react-native";
 import React, { useState } from "react";
 import {
   Dimensions,
   FlatList,
+  Image,
   SafeAreaView,
-  ScrollView,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
-
-interface WalkEntry {
-  id: string;
-  date: string;
-  duration: number; // in minutes
-  distance: number; // in kilometers
-  weather: string;
-  notes?: string;
-}
-
-// Mock data for demonstration
-const mockWalkHistory: WalkEntry[] = [
-  {
-    id: "1",
-    date: "2024-01-15",
-    duration: 45,
-    distance: 2.3,
-    weather: "Sunny",
-    notes: "Great walk in the park!",
-  },
-  {
-    id: "2",
-    date: "2024-01-14",
-    duration: 30,
-    distance: 1.8,
-    weather: "Cloudy",
-  },
-  {
-    id: "3",
-    date: "2024-01-13",
-    duration: 60,
-    distance: 3.1,
-    weather: "Light Rain",
-    notes: "Short walk due to weather",
-  },
-];
 
 export default function JournalScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -59,7 +22,12 @@ export default function JournalScreen() {
   );
   const { width, height } = Dimensions.get("window");
 
-  const formatDuration = (minutes: number): string => {
+  // Get data from stores
+  const { walks } = useWalkStore();
+  const { dogs } = useDogStore();
+
+  const formatDuration = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hours > 0) {
@@ -68,15 +36,21 @@ export default function JournalScreen() {
     return `${mins}m`;
   };
 
+  const formatDistance = (meters: number): string => {
+    const km = meters / 1000;
+    return `${km.toFixed(2)} km`;
+  };
+
   const getWalksForDate = (date: string): WalkEntry[] => {
-    return mockWalkHistory.filter((walk) => walk.date === date);
+    return walks.filter((walk) => walk.date.split("T")[0] === date);
   };
 
   const getMarkedDates = () => {
     const marked: { [key: string]: any } = {};
 
-    mockWalkHistory.forEach((walk) => {
-      marked[walk.date] = {
+    walks.forEach((walk) => {
+      const walkDate = walk.date.split("T")[0];
+      marked[walkDate] = {
         marked: true,
         dotColor: "#10B981",
         activeOpacity: 0.7,
@@ -95,64 +69,73 @@ export default function JournalScreen() {
     return marked;
   };
 
-  const renderWalkEntry = ({ item }: { item: WalkEntry }) => (
-    <Card variant="default" padding="md" style={{ marginBottom: 12 }}>
-      <View className="flex-row justify-between items-start mb-2">
-        <Text className="text-lg font-semibold text-text-primary">
-          {new Date(item.date).toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          })}
-        </Text>
-        <View className="bg-primary/10 px-2 py-1 rounded-full">
-          <Text className="text-primary text-xs font-medium">
-            {item.weather}
-          </Text>
+  const getDogById = (dogId: string) => {
+    return dogs.find((dog) => dog.id === dogId);
+  };
+
+  const renderWalkEntry = ({ item }: { item: WalkEntry }) => {
+    const dog = getDogById(item.dogId);
+    const walkTime = new Date(item.time).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return (
+      <View style={styles.walkCard}>
+        {/* Colored stripe on the left */}
+        <View style={styles.colorStripe} />
+        
+        <View style={styles.walkCardContent}>
+          {/* Left Section - Dog Info */}
+          <View style={styles.dogInfoSection}>
+            <View style={styles.dogAvatarContainer}>
+              {dog?.photo ? (
+                <Image
+                  source={{ uri: dog.photo }}
+                  style={styles.dogAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.dogAvatarPlaceholder}>
+                  <Text style={styles.dogAvatarText}>🐕</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.dogName}>{dog?.name || "Unknown Dog"}</Text>
+            <Text style={styles.dogBreed}>{dog?.breed || ""}</Text>
+          </View>
+
+          {/* Right Section - Walk Stats */}
+          <View style={styles.walkStatsSection}>
+            <Text style={styles.walkStatsTitle}>Walk Details</Text>
+            <View style={styles.walkStatsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Time</Text>
+                <Text style={styles.statValue}>{walkTime}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Duration</Text>
+                <Text style={styles.statValue}>
+                  {formatDuration(item.duration)}
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Distance</Text>
+                <Text style={styles.statValue}>
+                  {formatDistance(item.distance)}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
       </View>
-
-      <View className="flex-row justify-between mb-3">
-        <View className="flex-1">
-          <Text className="text-text-secondary text-sm">Duration</Text>
-          <Text className="text-text-primary font-medium">
-            {formatDuration(item.duration)}
-          </Text>
-        </View>
-        <View className="flex-1">
-          <Text className="text-text-secondary text-sm">Distance</Text>
-          <Text className="text-text-primary font-medium">
-            {item.distance} km
-          </Text>
-        </View>
-        <View className="flex-1">
-          <Text className="text-text-secondary text-sm">Pace</Text>
-          <Text className="text-text-primary font-medium">
-            {(item.duration / item.distance).toFixed(1)} min/km
-          </Text>
-        </View>
-      </View>
-
-      {item.notes && (
-        <View className="border-t border-neutral-200 pt-2">
-          <Text className="text-text-secondary text-sm italic">
-            {item.notes}
-          </Text>
-        </View>
-      )}
-    </Card>
-  );
+    );
+  };
 
   const selectedDateWalks = getWalksForDate(selectedDate);
-  const totalWalks = mockWalkHistory.length;
-  const totalDistance = mockWalkHistory.reduce(
-    (sum, walk) => sum + walk.distance,
-    0
-  );
-  const totalDuration = mockWalkHistory.reduce(
-    (sum, walk) => sum + walk.duration,
-    0
-  );
+  const totalWalks = walks.length;
+  const totalDistance = walks.reduce((sum, walk) => sum + walk.distance, 0);
+  const totalDuration = walks.reduce((sum, walk) => sum + walk.duration, 0);
 
   return (
     <View style={{ flex: 1 }}>
@@ -171,48 +154,19 @@ export default function JournalScreen() {
       />
 
       <SafeAreaView className="flex-1 bg-transparent">
-        <ScrollView className="flex-1 px-6 py-8">
-          {/* Header */}
-          <View className="mb-6">
-            <Text className="text-2xl font-bold text-text-primary mb-2">
-              Walking Journal
-            </Text>
-            <Text className="text-text-secondary">
-              Track your walking adventures with your furry friend
-            </Text>
-          </View>
-
-          {/* Statistics Cards */}
-          <View className="flex-row mb-6 space-x-3">
-            <Card variant="elevated" padding="md" style={{ flex: 1 }}>
-              <Text className="text-text-secondary text-sm mb-1">
-                Total Walks
-              </Text>
-              <Text className="text-2xl font-bold text-primary">
-                {totalWalks}
-              </Text>
-            </Card>
-
-            <Card variant="elevated" padding="md" style={{ flex: 1 }}>
-              <Text className="text-text-secondary text-sm mb-1">Distance</Text>
-              <Text className="text-2xl font-bold text-secondary">
-                {totalDistance.toFixed(1)} km
-              </Text>
-            </Card>
-
-            <Card variant="elevated" padding="md" style={{ flex: 1 }}>
-              <Text className="text-text-secondary text-sm mb-1">Time</Text>
-              <Text className="text-2xl font-bold text-accent">
-                {formatDuration(totalDuration)}
-              </Text>
-            </Card>
-          </View>
-
+        <View className="flex-1 px-6 py-8">
           {/* Calendar Section */}
-          <Card variant="default" padding="lg" style={{ marginBottom: 24 }}>
-            <CardHeader>
-              <CardTitle>Walk Calendar</CardTitle>
-            </CardHeader>
+          <Card
+            variant="default"
+            padding="lg"
+            style={{
+              marginBottom: 24,
+              width: 0.9 * width,
+              alignSelf: "center",
+              borderRadius: 10,
+              overflow: "hidden",
+            }}
+          >
             <CardContent>
               <Calendar
                 current={selectedDate}
@@ -253,43 +207,30 @@ export default function JournalScreen() {
 
           {/* Selected Date Walks */}
           {selectedDateWalks.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-xl font-semibold text-text-primary mb-4">
-                Walks on{" "}
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </Text>
-
-              <FlatList
-                data={selectedDateWalks}
-                renderItem={renderWalkEntry}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
+            <FlatList
+              data={selectedDateWalks}
+              renderItem={renderWalkEntry}
+              keyExtractor={(item) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
           )}
 
           {/* No walks for selected date */}
           {selectedDateWalks.length === 0 && (
-            <Card variant="default" padding="lg" style={{ marginBottom: 24 }}>
-              <View className="items-center py-6">
-                <Text className="text-4xl mb-3">📅</Text>
-                <Text className="text-lg font-semibold text-text-primary mb-2">
-                  No walks on this date
-                </Text>
-                <Text className="text-text-secondary text-center">
-                  Select a date with a green dot to see walk details
-                </Text>
-              </View>
-            </Card>
+            <View style={styles.emptyStateContainer}>
+              <LottieView
+                source={require("../../assets/animations/dog-walking-3.json")}
+                autoPlay
+                loop
+                style={styles.emptyStateAnimation}
+              />
+              <Text style={styles.emptyStateText}>No Data This Day</Text>
+            </View>
           )}
 
           {/* Empty State for no walks at all */}
-          {mockWalkHistory.length === 0 && (
+          {walks.length === 0 && (
             <Card variant="default" padding="lg">
               <View className="items-center py-8">
                 <Text className="text-6xl mb-4">🐕</Text>
@@ -309,8 +250,146 @@ export default function JournalScreen() {
               </View>
             </Card>
           )}
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </View>
   );
 }
+
+const { width } = Dimensions.get("window");
+
+const styles = StyleSheet.create({
+  walkCard: {
+    width: width * 0.9,
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 0,
+    marginBottom: 16,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+    flexDirection: "row",
+    overflow: "hidden",
+  },
+  colorStripe: {
+    width: 6,
+    backgroundColor: "#10B981",
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
+  },
+  walkCardContent: {
+    flexDirection: "row",
+    flex: 1,
+    alignItems: "stretch",
+    padding: 20,
+  },
+  dogInfoSection: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingRight: 12,
+  },
+  dogAvatarContainer: {
+    marginBottom: 12,
+  },
+  dogAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: "#E5E7EB",
+  },
+  dogAvatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#E5E7EB",
+  },
+  dogAvatarText: {
+    fontSize: 24,
+  },
+  dogName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: 2,
+    textAlign: "center",
+  },
+  dogBreed: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  walkStatsSection: {
+    flex: 1,
+    paddingLeft: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  walkStatsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  walkStatsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  statItem: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#10B981",
+    textAlign: "center",
+  },
+  emptyStateContainer: {
+    // flex: 1,
+    backgroundColor: "white",
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  emptyStateAnimation: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#374151",
+    textAlign: "center",
+  },
+});
