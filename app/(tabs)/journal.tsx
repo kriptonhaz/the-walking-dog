@@ -27,12 +27,8 @@ export default function JournalScreen() {
 
   const formatDuration = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
   };
 
   const formatDistance = (meters: number): string => {
@@ -380,11 +376,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptyStateContainer: {
-    // flex: 1,
+    maxHeight: 250,
+    width: width * 0.9,
     backgroundColor: "white",
     borderRadius: 16,
-    marginHorizontal: 20,
-    marginTop: 20,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 40,
@@ -398,9 +393,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   emptyStateAnimation: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+    width: 140,
+    height: 140,
+    marginBottom: 0,
   },
   emptyStateText: {
     fontSize: 18,
