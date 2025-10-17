@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui";
 import { DesignSystemColors } from "@/constants/theme";
+import { useWalkStore } from "@/store/walkStore";
 import { Ionicons } from "@expo/vector-icons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import * as Location from "expo-location";
@@ -15,7 +16,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useWalkStore } from "@/store/walkStore";
 
 // Initialize MapLibre
 MapLibreGL.setAccessToken(null);
@@ -31,12 +31,16 @@ interface WalkStats {
 export default function WalkMapScreen() {
   // Get AI recommendation data and dog ID from navigation params
   const params = useLocalSearchParams();
-  const dogId = params.dogId as string || 'default-dog-id';
+  const dogId = (params.dogId as string) || "default-dog-id";
   const aiSuggestion = {
-    distance: params.suggestedDistance ? parseFloat(params.suggestedDistance as string) : null,
-    duration: params.suggestedDuration ? parseInt(params.suggestedDuration as string) : null,
-    intensity: params.intensity as string || null,
-    message: params.message as string || null,
+    distance: params.suggestedDistance
+      ? parseFloat(params.suggestedDistance as string)
+      : null,
+    duration: params.suggestedDuration
+      ? parseInt(params.suggestedDuration as string)
+      : null,
+    intensity: (params.intensity as string) || null,
+    message: (params.message as string) || null,
   };
 
   // Walk store for saving walk data
@@ -60,6 +64,7 @@ export default function WalkMapScreen() {
   const lastLocation = useRef<Location.LocationObject | null>(null);
   const previousWalkLocation = useRef<Location.LocationObject | null>(null);
   const cameraRef = useRef<any>(null);
+  const zoomLevel = 16;
 
   // Location tracking useEffect - runs once on mount
   useEffect(() => {
@@ -91,7 +96,7 @@ export default function WalkMapScreen() {
                 newLocation.coords.longitude,
                 newLocation.coords.latitude,
               ],
-              zoomLevel: 15,
+              zoomLevel: zoomLevel,
               animationDuration: 500,
               animationMode: "flyTo",
             });
@@ -130,7 +135,7 @@ export default function WalkMapScreen() {
           ...prev,
           [location.coords.longitude, location.coords.latitude],
         ]);
-        
+
         // Update previousWalkLocation after calculating distance
         previousWalkLocation.current = location;
       }
@@ -166,7 +171,7 @@ export default function WalkMapScreen() {
     if (location && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [location.coords.longitude, location.coords.latitude],
-        zoomLevel: 15,
+        zoomLevel: zoomLevel,
         animationDuration: 1000,
         animationMode: "flyTo",
       });
@@ -196,6 +201,33 @@ export default function WalkMapScreen() {
   const startWalk = async () => {
     if (!location) return;
 
+    // Remove existing location subscription if it exists
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+    }
+
+    // Start new location tracking specifically for walking
+    locationSubscription.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 1000,
+        distanceInterval: 1,
+      },
+      (newLocation) => {
+        setLocation(newLocation);
+        if (cameraRef.current) {
+          cameraRef.current.setCamera({
+            centerCoordinate: [
+              newLocation.coords.longitude,
+              newLocation.coords.latitude,
+            ],
+            zoomLevel: zoomLevel,
+            animationDuration: 500,
+          });
+        }
+      }
+    );
+
     const startTime = new Date();
     setIsWalking(true);
     setCurrentDistance(0);
@@ -209,8 +241,6 @@ export default function WalkMapScreen() {
 
     // Initialize previousWalkLocation for distance calculations
     previousWalkLocation.current = location;
-
-    // Timer is now handled by the useEffect
   };
 
   const endWalk = () => {
@@ -224,12 +254,12 @@ export default function WalkMapScreen() {
     if (walkStats) {
       const walkEntry = {
         dogId: dogId,
-        date: new Date().toISOString().split('T')[0], // Date only (YYYY-MM-DD)
+        date: new Date().toISOString().split("T")[0], // Date only (YYYY-MM-DD)
         time: new Date().toISOString(), // Full ISO timestamp
         distance: currentDistance,
         duration: walkDuration,
       };
-      
+
       addWalk(walkEntry);
     }
 
@@ -349,7 +379,7 @@ export default function WalkMapScreen() {
             location.coords.longitude,
             location.coords.latitude,
           ]}
-          zoomLevel={15}
+          zoomLevel={zoomLevel}
           animationMode="flyTo"
           animationDuration={1000}
         />
@@ -412,23 +442,29 @@ export default function WalkMapScreen() {
           <>
             <Text style={styles.walkTitle}>Ready to Walk</Text>
             <Text style={styles.walkSubtitle}>Start tracking your walk!</Text>
-            
+
             {/* AI Suggestions */}
             {aiSuggestion.distance && aiSuggestion.duration && (
               <View style={styles.aiSuggestionsContainer}>
-                <Text style={styles.aiSuggestionsTitle}>AI Recommendations</Text>
+                <Text style={styles.aiSuggestionsTitle}>
+                  AI Recommendations
+                </Text>
                 <View style={styles.aiSuggestionsRow}>
                   <View style={styles.aiSuggestionItem}>
                     <Text style={styles.aiSuggestionValue}>
                       {aiSuggestion.distance} km
                     </Text>
-                    <Text style={styles.aiSuggestionLabel}>Suggested Distance</Text>
+                    <Text style={styles.aiSuggestionLabel}>
+                      Suggested Distance
+                    </Text>
                   </View>
                   <View style={styles.aiSuggestionItem}>
                     <Text style={styles.aiSuggestionValue}>
                       {aiSuggestion.duration} min
                     </Text>
-                    <Text style={styles.aiSuggestionLabel}>Suggested Duration</Text>
+                    <Text style={styles.aiSuggestionLabel}>
+                      Suggested Duration
+                    </Text>
                   </View>
                 </View>
                 {aiSuggestion.intensity && (
