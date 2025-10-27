@@ -5,6 +5,7 @@ export { Input } from './input';
 export { Dropdown } from './dropdown';
 export { Collapsible } from './collapsible';
 export { DogPaws } from './dog-paws';
+export * from "./tamagui-test";
 
 export type { ButtonProps } from './button';
 export type { AlertProps } from './alert';

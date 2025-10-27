@@ -1,10 +1,10 @@
-import { Button, DogPaws } from "@/components/ui";
-import { DesignSystemColors } from "@/constants/theme";
+import { DogPaws } from "@/components/ui";
 import { useDogStore } from "@/store/dogStore";
 import { router } from "expo-router";
 import LottieView from "lottie-react-native";
 import React from "react";
-import { Dimensions, StatusBar, Text, View } from "react-native";
+import { Dimensions, StatusBar, View } from "react-native";
+import { Button, Text } from "tamagui";
 
 const { width, height } = Dimensions.get("window");
 
@@ -60,7 +60,6 @@ export default function LandingScreen() {
         <View
           style={{
             flex: 1,
-            // justifyContent: "center",
             alignItems: "center",
             minHeight: height - 100,
           }}
@@ -83,11 +82,9 @@ export default function LandingScreen() {
             />
             <View style={{ width: "100%", maxWidth: 280, marginTop: -50 }}>
               <Button
-                title="Let's Go!"
                 onPress={handleGetStarted}
-                variant="primary"
-                size="lg"
-                rightIcon={<DogPaws size={18} color="#ffffff" />}
+                size="$5"
+                theme="accent"
                 style={{
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 4 },
@@ -95,14 +92,13 @@ export default function LandingScreen() {
                   shadowRadius: 8,
                   elevation: 8,
                   borderRadius: 12,
-                  paddingVertical: 16,
                 }}
-                textStyle={{
-                  fontSize: 18,
-                  fontWeight: "bold",
-                  paddingLeft: 8,
-                }}
-              />
+              >
+                <Text fontWeight="bold" fontSize={20}>
+                  Let's Go!
+                </Text>
+                <DogPaws size={18} color="#ffffff" />
+              </Button>
             </View>
           </View>
 
@@ -118,7 +114,7 @@ export default function LandingScreen() {
               style={{
                 fontSize: 28,
                 fontWeight: "bold",
-                color: DesignSystemColors.neutral[800],
+                color: "#1f2937", // equivalent to DesignSystemColors.neutral[800]
                 textAlign: "center",
                 marginBottom: 8,
                 textShadowColor: "rgba(255, 255, 255, 0.8)",
@@ -126,12 +122,12 @@ export default function LandingScreen() {
                 textShadowRadius: 2,
               }}
             >
-              The Walking Dog
+              Walksy Dog
             </Text>
             <Text
               style={{
                 fontSize: 12,
-                color: DesignSystemColors.neutral[500],
+                color: "#6b7280", // equivalent to DesignSystemColors.neutral[500]
                 textAlign: "center",
                 fontStyle: "italic",
                 backgroundColor: "rgba(255, 255, 255, 0.8)",

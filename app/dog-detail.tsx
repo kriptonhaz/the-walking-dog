@@ -782,11 +782,7 @@ export default function WalkScreen() {
                 shadowRadius: 8,
                 elevation: 6,
               }}
-              textStyle={{
-                fontSize: 18,
-                fontWeight: "700",
-                letterSpacing: 0.5,
-              }}
+
             />
           </ScrollView>
         </Card>
