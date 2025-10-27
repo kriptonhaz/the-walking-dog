@@ -68,7 +68,6 @@ export const Card: React.FC<CardProps> = ({
 };
 
 export interface CardHeaderProps extends ViewProps {
-  className?: string;
 }
 
 export const CardHeader: React.FC<CardHeaderProps> = ({
@@ -91,7 +90,6 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
 };
 
 export interface CardTitleProps extends TextProps {
-  className?: string;
 }
 
 export const CardTitle: React.FC<CardTitleProps> = ({
@@ -117,7 +115,6 @@ export const CardTitle: React.FC<CardTitleProps> = ({
 };
 
 export interface CardDescriptionProps extends TextProps {
-  className?: string;
 }
 
 export const CardDescription: React.FC<CardDescriptionProps> = ({
@@ -141,7 +138,6 @@ export const CardDescription: React.FC<CardDescriptionProps> = ({
 };
 
 export interface CardContentProps extends ViewProps {
-  className?: string;
 }
 
 export const CardContent: React.FC<CardContentProps> = ({
@@ -157,7 +153,6 @@ export const CardContent: React.FC<CardContentProps> = ({
 };
 
 export interface CardFooterProps extends ViewProps {
-  className?: string;
 }
 
 export const CardFooter: React.FC<CardFooterProps> = ({
