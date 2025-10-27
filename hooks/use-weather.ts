@@ -1,7 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import * as Location from 'expo-location';
-import { Alert } from 'react-native';
-import { WeatherService, WeatherInfo, LocationData } from '@/services/weather-api';
+import {
+  LocationData,
+  WeatherInfo,
+  WeatherService,
+} from "@/services/weather-api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Location from "expo-location";
+import { Alert } from "react-native";
 
 interface UseWeatherOptions {
   enabled?: boolean;
@@ -18,7 +22,9 @@ interface UseWeatherReturn {
   requestLocationAndWeather: () => Promise<void>;
 }
 
-export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn => {
+export const useWeather = (
+  options: UseWeatherOptions = {}
+): UseWeatherReturn => {
   const { enabled = true, refetchInterval } = options;
   const queryClient = useQueryClient();
 
@@ -28,12 +34,12 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
     isLoading: isLocationLoading,
     error: locationError,
   } = useQuery({
-    queryKey: ['location'],
+    queryKey: ["location"],
     queryFn: async (): Promise<LocationData> => {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        throw new Error('Location permission denied');
+      if (status !== "granted") {
+        throw new Error("Location permission denied");
       }
 
       // Get current location
@@ -42,7 +48,7 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
       });
 
       const { latitude, longitude } = currentLocation.coords;
-      
+
       // Reverse geocoding to get city name
       const reverseGeocode = await Location.reverseGeocodeAsync({
         latitude,
@@ -52,8 +58,8 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
       return {
         latitude,
         longitude,
-        city: reverseGeocode[0]?.city || 'Unknown',
-        country: reverseGeocode[0]?.country || 'Unknown',
+        city: reverseGeocode[0]?.city || "Unknown",
+        country: reverseGeocode[0]?.country || "Unknown",
       };
     },
     enabled,
@@ -69,10 +75,10 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
     error: weatherError,
     refetch: refetchWeather,
   } = useQuery({
-    queryKey: ['weather', location?.latitude, location?.longitude],
+    queryKey: ["weather", location?.latitude, location?.longitude],
     queryFn: async (): Promise<WeatherInfo> => {
       if (!location) {
-        throw new Error('Location not available');
+        throw new Error("Location not available");
       }
 
       try {
@@ -80,13 +86,13 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
           location.latitude,
           location.longitude
         );
-        
+
         return {
           ...weatherData,
           location: `${location.city}, ${location.country}`,
         };
       } catch (error) {
-        console.warn('Weather API failed, using mock data:', error);
+        console.warn("Weather API failed, using mock data:", error);
         // Fallback to mock data if API fails
         return {
           ...WeatherService.getMockWeather(),
@@ -106,33 +112,37 @@ export const useWeather = (options: UseWeatherOptions = {}): UseWeatherReturn =>
     mutationFn: async () => {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      if (status !== "granted") {
         Alert.alert(
-          'Location Permission Required',
-          'Please enable location access to get weather information for your walks.',
+          "Location Permission Required",
+          "Please enable location access to get weather information for your walks.",
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Settings', onPress: () => Location.requestForegroundPermissionsAsync() }
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Settings",
+              onPress: () => Location.requestForegroundPermissionsAsync(),
+            },
           ]
         );
-        throw new Error('Location permission denied');
+        throw new Error("Location permission denied");
       }
 
       // Invalidate and refetch both location and weather
-      await queryClient.invalidateQueries({ queryKey: ['location'] });
-      await queryClient.invalidateQueries({ queryKey: ['weather'] });
+      await queryClient.invalidateQueries({ queryKey: ["location"] });
+      await queryClient.invalidateQueries({ queryKey: ["weather"] });
     },
     onError: (error) => {
-      console.error('Failed to refresh location and weather:', error);
+      // console.error('Failed to refresh location and weather:', error);
     },
   });
 
-  const isLoading = isLocationLoading || isWeatherLoading || locationWeatherMutation.isPending;
+  const isLoading =
+    isLocationLoading || isWeatherLoading || locationWeatherMutation.isPending;
   const error = locationError || weatherError || locationWeatherMutation.error;
 
   const refetch = () => {
     refetchWeather();
-    queryClient.invalidateQueries({ queryKey: ['location'] });
+    queryClient.invalidateQueries({ queryKey: ["location"] });
   };
 
   const requestLocationAndWeather = async () => {

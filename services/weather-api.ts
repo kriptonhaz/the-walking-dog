@@ -48,7 +48,7 @@ interface OpenMeteoResponse {
 }
 
 export class WeatherService {
-  private static readonly OPEN_METEO_BASE_URL = 'https://api.open-meteo.com/v1';
+  private static readonly OPEN_METEO_BASE_URL = "https://api.open-meteo.com/v1";
 
   // Weather code descriptions based on WMO codes
   private static readonly weatherDescriptions = {
@@ -79,15 +79,18 @@ export class WeatherService {
     86: "Heavy snow showers",
     95: "Thunderstorm",
     96: "Thunderstorm with slight hail",
-    99: "Thunderstorm with heavy hail"
+    99: "Thunderstorm with heavy hail",
   } as const;
 
-  static async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherInfo> {
+  static async getCurrentWeather(
+    latitude: number,
+    longitude: number
+  ): Promise<WeatherInfo> {
     try {
       const url = `${this.OPEN_METEO_BASE_URL}/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-      
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -97,69 +100,81 @@ export class WeatherService {
 
       return {
         temperature: Math.round(currentWeather.temperature),
-        condition: this.weatherDescriptions[currentWeather.weathercode as keyof typeof this.weatherDescriptions] || 'Unknown',
+        condition:
+          this.weatherDescriptions[
+            currentWeather.weathercode as keyof typeof this.weatherDescriptions
+          ] || "Unknown",
         windSpeed: Math.round(currentWeather.windspeed),
         windDirection: currentWeather.winddirection,
         isDay: currentWeather.is_day === 1,
       };
     } catch (error) {
-      console.error('Weather API error:', error);
-      throw new Error('Failed to fetch weather data');
+      // console.error('Weather API error:', error);
+      throw new Error("Failed to fetch weather data");
     }
   }
 
   static getMockWeather(): WeatherInfo {
     return {
       temperature: 22,
-      condition: 'Sunny',
+      condition: "Sunny",
       humidity: 65,
       windSpeed: 8,
       isDay: true,
-      location: 'Current Location',
+      location: "Current Location",
     };
   }
 
   static getWeatherIcon(condition: string): string {
     switch (condition.toLowerCase()) {
-      case 'sunny':
-      case 'clear':
-        return '☀️';
-      case 'cloudy':
-      case 'clouds':
-        return '☁️';
-      case 'rainy':
-      case 'rain':
-        return '🌧️';
-      case 'snowy':
-      case 'snow':
-        return '❄️';
-      case 'thunderstorm':
-        return '⛈️';
-      case 'drizzle':
-        return '🌦️';
-      case 'mist':
-      case 'fog':
-        return '🌫️';
+      case "sunny":
+      case "clear":
+        return "☀️";
+      case "cloudy":
+      case "clouds":
+        return "☁️";
+      case "rainy":
+      case "rain":
+        return "🌧️";
+      case "snowy":
+      case "snow":
+        return "❄️";
+      case "thunderstorm":
+        return "⛈️";
+      case "drizzle":
+        return "🌦️";
+      case "mist":
+      case "fog":
+        return "🌫️";
       default:
-        return '🌤️';
+        return "🌤️";
     }
   }
 
-  static getWalkingRecommendation(weather: WeatherInfo): { text: string; color: string } {
+  static getWalkingRecommendation(weather: WeatherInfo): {
+    text: string;
+    color: string;
+  } {
     const temp = weather.temperature;
-    
+
     if (temp > 30) {
-      return { text: 'Too hot! Walk early morning or evening', color: 'text-red-600' };
+      return {
+        text: "Too hot! Walk early morning or evening",
+        color: "text-red-600",
+      };
     } else if (temp > 25) {
-      return { text: 'Great weather for walking!', color: 'text-green-600' };
+      return { text: "Great weather for walking!", color: "text-green-600" };
     } else if (temp > 15) {
-      return { text: 'Perfect walking conditions', color: 'text-green-500' };
+      return { text: "Perfect walking conditions", color: "text-green-500" };
     } else if (temp > 5) {
-      return { text: 'Cool weather - perfect for active dogs', color: 'text-blue-500' };
+      return {
+        text: "Cool weather - perfect for active dogs",
+        color: "text-blue-500",
+      };
     } else if (temp > 0) {
-      return { text: 'Bundle up for a chilly walk', color: 'text-blue-600' };
+      return { text: "Bundle up for a chilly walk", color: "text-blue-600" };
     } else {
-      return { text: 'Very cold - keep walks short', color: 'text-blue-800' };
+      return { text: "Very cold - keep walks short", color: "text-blue-800" };
     }
   }
 }
