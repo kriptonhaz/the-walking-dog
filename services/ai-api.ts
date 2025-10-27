@@ -235,17 +235,17 @@ ${request.location ? `- Location: ${request.location}` : ""}`;
 
           // Check if content is empty or incomplete
           if (!cleanContent || cleanContent.length < 10) {
-            console.error(
-              "AI response content is empty or too short:",
-              cleanContent
-            );
+            // console.error(
+            //   "AI response content is empty or too short:",
+            //   cleanContent
+            // );
             return this.getDefaultRecommendation(request);
           }
 
           // Check if the response was truncated by looking at finish_reason
           const finishReason = data.choices[0]?.finish_reason;
           if (finishReason === "length") {
-            console.warn("AI response was truncated due to max_tokens limit");
+            // console.warn("AI response was truncated due to max_tokens limit");
             // Try to parse anyway, but if it fails, use default
           }
 
@@ -257,24 +257,24 @@ ${request.location ? `- Location: ${request.location}` : ""}`;
             !parsedResponse.dog ||
             !parsedResponse.recommendation
           ) {
-            console.error(
-              "AI response missing required fields:",
-              parsedResponse
-            );
+            // console.error(
+            //   "AI response missing required fields:",
+            //   parsedResponse
+            // );
             return this.getDefaultRecommendation(request);
           }
 
           return parsedResponse as WalkRecommendationResponse;
         } catch (parseError) {
-          console.error("Failed to parse AI response:", parseError);
-          console.error("Raw content:", content);
+          // console.error("Failed to parse AI response:", parseError);
+          // console.error("Raw content:", content);
           return this.getDefaultRecommendation(request);
         }
       }
 
       return this.getDefaultRecommendation(request);
     } catch (error) {
-      console.error("AI API error:", error);
+      // console.error("AI API error:", error);
       return this.getDefaultRecommendation(request);
     }
   }

@@ -102,7 +102,7 @@ export default function WalkScreen() {
       // Navigate to home screen
       router.push("/(tabs)");
     } catch (error) {
-      console.error("Error adding dog:", error);
+      // console.error("Error adding dog:", error);
       Alert.alert("Error", "Failed to register dog. Please try again.");
     }
   };
@@ -165,7 +165,7 @@ export default function WalkScreen() {
         setValue("photo", result.assets[0].uri);
       }
     } catch (error) {
-      console.error("Error picking image:", error);
+      // console.error("Error picking image:", error);
       Alert.alert(
         "Error",
         "There was an error accessing your photo library. Please try again.",
