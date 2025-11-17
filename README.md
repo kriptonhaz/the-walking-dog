@@ -6,7 +6,7 @@
 
 ## 🎥 Demo
 
-https://github.com/user-attachments/assets/the-walking-dog-1080-web.mp4
+https://github.com/user-attachments/assets/6540f1d6-db24-46ad-82d4-3ccd2f6e87b5
 
 ## ✨ Features
 
